@@ -1478,24 +1478,11 @@ function data_print_preference_form($data, $perpage, $search, $sort='', $order='
     echo '<form id="options" action="view.php" method="get">';
     echo '<div>';
     echo '<input type="hidden" name="d" value="'.$data->id.'" />';
-    if ($mode =='asearch') {
-        $advanced = 1;
-        echo '<input type="hidden" name="mode" value="list" />';
-    }
     echo '<label for="pref_perpage">'.get_string('pagesize','data').'</label> ';
     $pagesizes = array(2=>2,3=>3,4=>4,5=>5,6=>6,7=>7,8=>8,9=>9,10=>10,15=>15,
                        20=>20,30=>30,40=>40,50=>50,100=>100,200=>200,300=>300,400=>400,500=>500,1000=>1000);
     echo html_writer::select($pagesizes, 'perpage', $perpage, false, array('id'=>'pref_perpage'));
 
-    if ($advanced) {
-        $regsearchclass = 'search_none';
-        $advancedsearchclass = 'search_inline';
-    } else {
-        $regsearchclass = 'search_inline';
-        $advancedsearchclass = 'search_none';
-    }
-    echo '<div id="reg_search" class="' . $regsearchclass . '" >&nbsp;&nbsp;&nbsp;';
-    echo '<label for="pref_search">'.get_string('search').'</label> <input type="text" size="16" name="search" id= "pref_search" value="'.s($search).'" /></div>';
     echo '&nbsp;&nbsp;&nbsp;<label for="pref_sortby">'.get_string('sortby').'</label> ';
     // foreach field, print the option
     echo '<select name="sort" id="pref_sortby">';
@@ -1552,7 +1539,19 @@ function data_print_preference_form($data, $perpage, $search, $sort='', $order='
     echo '&nbsp;<input type="hidden" name="advanced" value="0" />';
     echo '&nbsp;<input type="hidden" name="filter" value="1" />';
     echo '&nbsp;<input type="checkbox" id="advancedcheckbox" name="advanced" value="1" '.$checked.' onchange="showHideAdvSearch(this.checked);" /><label for="advancedcheckbox">'.get_string('advancedsearch', 'data').'</label>';
-    echo '&nbsp;<input type="submit" value="'.get_string('savesettings','data').'" />';
+
+    echo '<br /><br />';
+
+    if ($advanced) {
+        $regsearchclass = 'search_none';
+        $advancedsearchclass = 'search_inline';
+    } else {
+        $regsearchclass = 'search_inline';
+        $advancedsearchclass = 'search_none';
+    }
+    echo '<div id="reg_search" class="' . $regsearchclass . '" >&nbsp;&nbsp;&nbsp;';
+    echo '<input type="text" size="16" name="search" id= "pref_search" value="'.s($search).'" />';
+    echo '&nbsp;<input type="submit" value="'.get_string('search','data').'" /></div>';
 
     echo '<br />';
     echo '<div class="' . $advancedsearchclass . '" id="data_adv_form">';
@@ -1620,7 +1619,7 @@ function data_print_preference_form($data, $perpage, $search, $sort='', $order='
     echo format_text($newtext, FORMAT_HTML, $options);
     echo '</td></tr>';
 
-    echo '<tr><td colspan="4"><br/><input type="submit" value="'.get_string('savesettings','data').'" /><input type="submit" name="resetadv" value="'.get_string('resetsettings','data').'" /></td></tr>';
+    echo '<tr><td colspan="4"><br/><input type="submit" value="'.get_string('search','data').'" /><input type="submit" name="resetadv" value="'.get_string('resetsettings','data').'" /></td></tr>';
     echo '</table>';
     echo '</div>';
     echo '</div>';
@@ -3032,7 +3031,6 @@ function data_extend_navigation($navigation, $course, $module, $cm) {
     } else {
         $navigation->add(get_string('single', 'data'), new moodle_url('/mod/data/view.php', array('d'=>$cm->instance, 'mode'=>'single')));
     }
-    $navigation->add(get_string('search', 'data'), new moodle_url('/mod/data/view.php', array('d'=>$cm->instance, 'mode'=>'asearch')));
 }
 
 /**
@@ -3073,8 +3071,6 @@ function data_extend_settings_navigation(settings_navigation $settings, navigati
             $defaultemplate = 'listtemplate';
         } else if ($currenttab == 'add') {
             $defaultemplate = 'addtemplate';
-        } else if ($currenttab == 'asearch') {
-            $defaultemplate = 'asearchtemplate';
         } else {
             $defaultemplate = 'singletemplate';
         }

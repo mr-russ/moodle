@@ -42,9 +42,6 @@
         $row[] = new tabobject('single', new moodle_url('/mod/data/view.php', array('d' => $data->id, 'mode' => 'single')), get_string('single','data'));
     }
 
-    // Add an advanced search tab.
-    $row[] = new tabobject('asearch', new moodle_url('/mod/data/view.php', array('d' => $data->id, 'mode' => 'asearch')), get_string('search', 'data'));
-
     if (isloggedin()) { // just a perf shortcut
         if (data_user_can_add_entry($data, $currentgroup, $groupmode, $context)) { // took out participation list here!
             $addstring = empty($editentry) ? get_string('add', 'data') : get_string('editentry', 'data');
@@ -61,8 +58,6 @@
                 $defaultemplate = 'listtemplate';
             } else if ($currenttab == 'add') {
                 $defaultemplate = 'addtemplate';
-            } else if ($currenttab == 'asearch') {
-                $defaultemplate = 'asearchtemplate';
             } else {
                 $defaultemplate = 'singletemplate';
             }
