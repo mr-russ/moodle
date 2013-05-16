@@ -1536,11 +1536,11 @@ function data_print_preference_form($data, $perpage, $search, $sort='', $order='
         $checked = '';
     }
     $PAGE->requires->js('/mod/data/data.js');
-    echo '&nbsp;<input type="hidden" name="advanced" value="0" />';
-    echo '&nbsp;<input type="hidden" name="filter" value="1" />';
-    echo '&nbsp;<input type="checkbox" id="advancedcheckbox" name="advanced" value="1" '.$checked.' onchange="showHideAdvSearch(this.checked);" /><label for="advancedcheckbox">'.get_string('advancedsearch', 'data').'</label>';
-
-    echo '<br /><br />';
+    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'filter', 'value' => '0'));
+    echo html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => 'advancedcheckbox', 'name' => 'advanced', 'value' => '1', 'onchange' => 'showHideAdvSearch(this.checked);'));
+    echo html_writer::empty_tag('label', array('for' => 'advancedcheckbox', 'name' => 'advanced', 'value' => '1', 'onchange' => 'showHideAdvSearch(this.checked);'));
+    echo html_writer::label(get_string('advancedsearch', 'data'), 'advancedcheckbox');
+    echo html_writer::empty_tag('br');
 
     if ($advanced) {
         $regsearchclass = 'search_none';
@@ -1558,7 +1558,6 @@ function data_print_preference_form($data, $perpage, $search, $sort='', $order='
     echo '<table class="boxaligncenter">';
 
     // print ASC or DESC
-    echo '<tr><td colspan="2">&nbsp;</td></tr>';
     $i = 0;
 
     // Determine if we are printing all fields for advanced search, or the template for advanced search
