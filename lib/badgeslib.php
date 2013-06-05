@@ -836,14 +836,17 @@ function badges_get_issued_badge_info($hash) {
                 bi.dateissued,
                 bi.dateexpire,
                 u.email,
-                b.*
+                b.*,
+                bb.email as backpackemail
             FROM
-                {badge} b,
-                {badge_issued} bi,
-                {user} u
-            WHERE b.id = bi.badgeid
-                AND u.id = bi.userid
-                AND ' . $DB->sql_compare_text('bi.uniquehash', 40) . ' = ' . $DB->sql_compare_text(':hash', 40),
+                {badge} b
+                JOIN {badge_issued} bi
+                    ON b.id = bi.badgeid
+                JOIN {user} u
+                    ON u.id = bi.userid
+                LEFT JOIN {badge_backpack} bb
+                    ON bb.userid = bi.userid
+            WHERE ' . $DB->sql_compare_text('bi.uniquehash', 40) . ' = ' . $DB->sql_compare_text(':hash', 40),
             array('hash' => $hash), IGNORE_MISSING);
 
     if ($record) {
@@ -854,11 +857,11 @@ function badges_get_issued_badge_info($hash) {
         }
 
         $url = new moodle_url('/badges/badge.php', array('hash' => $hash));
+        $email = empty($record->backpackemail) ? $record->email : $record->backpackemail;
 
         // Recipient's email is hashed: <algorithm>$<hash(email + salt)>.
-        $badgesalt = isset($CFG->badgesalt) ? $CFG->badgesalt : '';
-        $a['recipient'] = 'sha256$' . hash('sha256', $record->email . $badgesalt);
-        $a['salt'] = $badgesalt;
+        $a['recipient'] = 'sha256$' . hash('sha256', $email . $CFG->badges_badgesalt);
+        $a['salt'] = $CFG->badges_badgesalt;
 
         if ($record->dateexpire) {
             $a['expires'] = date('Y-m-d', $record->dateexpire);
@@ -1276,7 +1279,7 @@ function badges_check_backpack_accessibility() {
         'FRESH_CONNECT' => true,
         'RETURNTRANSFER' => true,
         'HEADER' => 0,
-        'CONNECTTIMEOUT_MS' => 2000,
+        'CONNECTTIMEOUT' => 2,
     );
     $location = 'http://backpack.openbadges.org/baker';
     $out = $curl->get($location, array('assertion' => $fakeassertion->out(false)), $options);
@@ -1304,4 +1307,34 @@ function badges_check_backpack_accessibility() {
 function badges_user_has_backpack($userid) {
     global $DB;
     return $DB->record_exists('badge_backpack', array('userid' => $userid));
+}
+
+/**
+ * Handles what happens to the course badges when a course is deleted.
+ *
+ * @param int $courseid course ID.
+ * @return void.
+ */
+function badges_handle_course_deletion($courseid) {
+    global $CFG, $DB;
+    include_once $CFG->libdir . '/filelib.php';
+
+    $systemcontext = context_system::instance();
+    $coursecontext = context_course::instance($courseid);
+    $fs = get_file_storage();
+
+    // Move badges images to the system context.
+    $fs->move_area_files_to_new_context($coursecontext->id, $systemcontext->id, 'badges', 'badgeimage');
+
+    // Get all course badges.
+    $badges = $DB->get_records('badge', array('type' => BADGE_TYPE_COURSE, 'courseid' => $courseid));
+    foreach ($badges as $badge) {
+        // Archive badges in this course.
+        $toupdate = new stdClass();
+        $toupdate->id = $badge->id;
+        $toupdate->type = BADGE_TYPE_SITE;
+        $toupdate->courseid = null;
+        $toupdate->status = BADGE_STATUS_ARCHIVED;
+        $DB->update_record('badge', $toupdate);
+    }
 }

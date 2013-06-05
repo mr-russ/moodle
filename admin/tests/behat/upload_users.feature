@@ -1,7 +1,7 @@
-@admin @_only_local
+@core @core_admin @_only_local
 Feature: Upload users
   In order to add users to the system
-  As a moodle admin
+  As an admin
   I need to upload files containing the users data
 
   @javascript

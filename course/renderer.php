@@ -200,18 +200,14 @@ class core_course_renderer extends plugin_renderer_base {
         $formcontent .= html_writer::start_tag('div', array('class' => 'alloptions'));
 
          // Activities
-        $activities = array_filter($modules, function($mod) {
-            return ($mod->archetype !== MOD_ARCHETYPE_RESOURCE && $mod->archetype !== MOD_ARCHETYPE_SYSTEM);
-        });
+        $activities = array_filter($modules, create_function('$mod', 'return ($mod->archetype !== MOD_ARCHETYPE_RESOURCE && $mod->archetype !== MOD_ARCHETYPE_SYSTEM);'));
         if (count($activities)) {
             $formcontent .= $this->course_modchooser_title('activities');
             $formcontent .= $this->course_modchooser_module_types($activities);
         }
 
         // Resources
-        $resources = array_filter($modules, function($mod) {
-            return ($mod->archetype === MOD_ARCHETYPE_RESOURCE);
-        });
+        $resources = array_filter($modules, create_function('$mod', 'return ($mod->archetype === MOD_ARCHETYPE_RESOURCE);'));
         if (count($resources)) {
             $formcontent .= $this->course_modchooser_title('resources');
             $formcontent .= $this->course_modchooser_module_types($resources);
@@ -1169,13 +1165,15 @@ class core_course_renderer extends plugin_renderer_base {
         }
 
         // display course category if necessary (for example in search results)
-        if ($chelper->get_show_courses() == self::COURSECAT_SHOW_COURSES_EXPANDED_WITH_CAT
-                && ($cat = coursecat::get($course->category, IGNORE_MISSING))) {
-            $content .= html_writer::start_tag('div', array('class' => 'coursecat'));
-            $content .= get_string('category').': '.
-                    html_writer::link(new moodle_url('/course/index.php', array('categoryid' => $cat->id)),
-                            $cat->get_formatted_name(), array('class' => $cat->visible ? '' : 'dimmed'));
-            $content .= html_writer::end_tag('div'); // .coursecat
+        if ($chelper->get_show_courses() == self::COURSECAT_SHOW_COURSES_EXPANDED_WITH_CAT) {
+            require_once($CFG->libdir. '/coursecatlib.php');
+            if ($cat = coursecat::get($course->category, IGNORE_MISSING)) {
+                $content .= html_writer::start_tag('div', array('class' => 'coursecat'));
+                $content .= get_string('category').': '.
+                        html_writer::link(new moodle_url('/course/index.php', array('categoryid' => $cat->id)),
+                                $cat->get_formatted_name(), array('class' => $cat->visible ? '' : 'dimmed'));
+                $content .= html_writer::end_tag('div'); // .coursecat
+            }
         }
 
         return $content;
@@ -1625,6 +1623,7 @@ class core_course_renderer extends plugin_renderer_base {
         $content = '';
         if (!empty($searchcriteria)) {
             // print search results
+            require_once($CFG->libdir. '/coursecatlib.php');
 
             $displayoptions = array('sort' => array('displayname' => 1));
             // take the current page and number of results per page from query
@@ -1689,6 +1688,7 @@ class core_course_renderer extends plugin_renderer_base {
      */
     public function tagged_courses($tagid) {
         global $CFG;
+        require_once($CFG->libdir. '/coursecatlib.php');
         $displayoptions = array('limit' => $CFG->coursesperpage);
         $displayoptions['viewmoreurl'] = new moodle_url('/course/search.php',
                 array('tagid' => $tagid, 'page' => 1, 'perpage' => $CFG->coursesperpage));

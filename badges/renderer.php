@@ -506,7 +506,7 @@ class core_badges_renderer extends plugin_renderer_base {
         $paging = new paging_bar($badges->totalcount, $badges->page, $badges->perpage, $this->page->url, 'page');
         $htmlpagingbar = $this->render($paging);
         $table = new html_table();
-        $table->attributes['class'] = 'collection boxaligncenter boxwidthwide';
+        $table->attributes['class'] = 'collection';
 
         $sortbyname = $this->helper_sortable_heading(get_string('name'),
                 'name', $badges->sort, $badges->dir);
@@ -637,12 +637,15 @@ class core_badges_renderer extends plugin_renderer_base {
         echo $this->tabtree($row, $current);
     }
 
-    // Prints badge status box.
+    /**
+     * Prints badge status box.
+     * @return Either the status box html as a string or null
+     */
     public function print_badge_status_box(badge $badge) {
-        $table = new html_table();
-        $table->attributes['class'] = 'boxaligncenter statustable';
-
         if (has_capability('moodle/badges:configurecriteria', $badge->get_context())) {
+            $table = new html_table();
+            $table->attributes['class'] = 'boxaligncenter statustable';
+
             if (!$badge->has_criteria()) {
                 $criteriaurl = new moodle_url('/badges/criteria.php', array('id' => $badge->id));
                 $status = get_string('nocriteria', 'badges');
@@ -669,12 +672,13 @@ class core_badges_renderer extends plugin_renderer_base {
                 }
                 $row = array($status . $this->output->help_icon('status', 'badges'), $action);
             }
+            $table->data[] = $row;
+
+            $style = $badge->is_active() ? 'generalbox statusbox active' : 'generalbox statusbox inactive';
+            return $this->output->box(html_writer::table($table), $style);
         }
 
-        $table->data[] = $row;
-
-        $style = $badge->is_active() ? 'generalbox statusbox active' : 'generalbox statusbox inactive';
-        return $this->output->box(html_writer::table($table), $style);
+        return null;
     }
 
     // Prints badge criteria.
@@ -740,7 +744,7 @@ class core_badges_renderer extends plugin_renderer_base {
         $paging = new paging_bar($recipients->totalcount, $recipients->page, $recipients->perpage, $this->page->url, 'page');
         $htmlpagingbar = $this->render($paging);
         $table = new html_table();
-        $table->attributes['class'] = 'generaltable generalbox boxaligncenter boxwidthwide';
+        $table->attributes['class'] = 'generaltable boxaligncenter boxwidthwide';
 
         $sortbyfirstname = $this->helper_sortable_heading(get_string('firstname'),
                 'firstname', $recipients->sort, $recipients->dir);

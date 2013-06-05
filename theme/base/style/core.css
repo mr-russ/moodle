@@ -1,7 +1,8 @@
 /**
- * Required to undo YUI resets that override input size
+ * Required to undo YUI resets that override input size, margin, etc.
  */
 input[type=text],input[type=password],textarea{width:auto;}
+input[type=checkbox],input[type=radio]{margin-right: 7px;}
 
 /* Fix for YUI overriding styles */
 strong{font-style:inherit;}em{font-weight:inherit;}
@@ -39,7 +40,9 @@ a.dimmed_text:visited,
 .usersuspended a:link,
 .usersuspended a:visited,
 .dimmed_category,
-.dimmed_category a {
+.dimmed_category a,
+.dimmed_category a:link,
+.dimmed_category a:visited {
     color: #AAA;
 }
 .activity.label .dimmed_text {
@@ -274,7 +277,7 @@ a.skip:active {position: static;display: block;}
 .mform .fitem fieldset.fgroup label,
 .mform .fradio label,
 .mform fieldset.fdate_selector label,
-.mform fieldset.fdate_time_selector label {display:inline;float: none; margin-left: .3em; vertical-align: text-bottom;}
+.mform fieldset.fdate_time_selector label {display:inline; float:none; margin-left:.3em; vertical-align:baseline;}
 .dir-rtl .mform .fcheckbox label,
 .dir-rtl .mform .fduration label,
 .dir-rtl .mform .fitem fieldset.fgroup label,

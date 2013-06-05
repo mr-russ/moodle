@@ -127,7 +127,7 @@ if (function_exists('date_default_timezone_set') and function_exists('date_defau
 /** Used by library scripts to check they are being called by Moodle */
 define('MOODLE_INTERNAL', true);
 
-// Disables caching.. just in case.
+// Disables all caching.
 define('CACHE_DISABLE_ALL', true);
 
 // Check that PHP is of a sufficient version
@@ -149,6 +149,7 @@ $CFG->httpswwwroot         = $CFG->wwwroot;
 $CFG->docroot              = 'http://docs.moodle.org';
 $CFG->running_installer    = true;
 $CFG->early_install_lang   = true;
+$CFG->ostype               = (stristr(PHP_OS, 'win') && !stristr(PHP_OS, 'darwin')) ? 'WINDOWS' : 'UNIX';
 
 $parts = explode('/', str_replace('\\', '/', dirname(dirname(__FILE__))));
 $CFG->admin                = array_pop($parts);

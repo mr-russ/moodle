@@ -912,10 +912,7 @@ function clean_param($param, $type) {
         case PARAM_PLUGIN:
         case PARAM_AREA:
             // we do not want any guessing here, either the name is correct or not
-            if (!preg_match('/^[a-z][a-z0-9_]*[a-z0-9]$/', $param)) {
-                return '';
-            }
-            if (strpos($param, '__') !== false) {
+            if (!is_valid_plugin_name($param)) {
                 return '';
             }
             return $param;
@@ -1394,9 +1391,6 @@ function get_config($plugin, $name = NULL) {
             // install the database.
             $siteidentifier = $DB->get_field('config', 'value', array('name' => 'siteidentifier'));
         } catch (dml_exception $ex) {
-            // It's failed. We'll use this opportunity to disable cache stores so that we don't inadvertingly start using
-            // old caches. People should delete their moodledata dirs when reinstalling the database... but they don't.
-            cache_factory::disable_stores();
             // Set siteidentifier to false. We don't want to trip this continually.
             $siteidentifier = false;
             throw $ex;
@@ -4488,7 +4482,7 @@ function hash_internal_user_password($password, $fasthash = false) {
 
     $generatedhash = password_hash($password, PASSWORD_DEFAULT, $options);
 
-    if ($generatedhash === false) {
+    if ($generatedhash === false || $generatedhash === null) {
         throw new moodle_exception('Failed to generate password hash.');
     }
 
@@ -4729,6 +4723,9 @@ function delete_course($courseorid, $showfeedback = true) {
     if ($courseid == SITEID) {
         return false;
     }
+
+    // Handle course badges.
+    badges_handle_course_deletion($courseid);
 
     // make the course completely empty
     remove_course_contents($courseid, $showfeedback);
@@ -6194,9 +6191,12 @@ function get_max_upload_sizes($sitebytes = 0, $coursebytes = 0, $modulebytes = 0
         return array();
     }
 
-    $filesize = array();
-    $filesize[(string)intval($maxsize)] = display_size($maxsize);
+    if ($sitebytes == 0) {
+        // Will get the minimum of upload_max_filesize or post_max_size.
+        $sitebytes = get_max_upload_file_size();
+    }
 
+    $filesize = array();
     $sizelist = array(10240, 51200, 102400, 512000, 1048576, 2097152,
                       5242880, 10485760, 20971520, 52428800, 104857600);
 
@@ -6222,7 +6222,6 @@ function get_max_upload_sizes($sitebytes = 0, $coursebytes = 0, $modulebytes = 0
        }
     }
 
-    krsort($filesize, SORT_NUMERIC);
     $limitlevel = '';
     $displaysize = '';
     if ($modulebytes &&
@@ -6230,14 +6229,20 @@ function get_max_upload_sizes($sitebytes = 0, $coursebytes = 0, $modulebytes = 0
          ($modulebytes < $sitebytes || $sitebytes == 0))) {
         $limitlevel = get_string('activity', 'core');
         $displaysize = display_size($modulebytes);
+        $filesize[$modulebytes] = $displaysize; // Make sure the limit is also included in the list.
+
     } else if ($coursebytes && ($coursebytes < $sitebytes || $sitebytes == 0)) {
         $limitlevel = get_string('course', 'core');
         $displaysize = display_size($coursebytes);
+        $filesize[$coursebytes] = $displaysize; // Make sure the limit is also included in the list.
+
     } else if ($sitebytes) {
         $limitlevel = get_string('site', 'core');
         $displaysize = display_size($sitebytes);
+        $filesize[$sitebytes] = $displaysize; // Make sure the limit is also included in the list.
     }
 
+    krsort($filesize, SORT_NUMERIC);
     if ($limitlevel) {
         $params = (object) array('contextname'=>$limitlevel, 'displaysize'=>$displaysize);
         $filesize  = array('0'=>get_string('uploadlimitwithsize', 'core', $params)) + $filesize;
@@ -6823,10 +6828,6 @@ class core_string_manager implements string_manager {
      * @return boot true if exists
      */
     public function string_exists($identifier, $component) {
-       $identifier = clean_param($identifier, PARAM_STRINGID);
-        if (empty($identifier)) {
-            return false;
-        }
         $lang = current_language();
         $string = $this->load_component_strings($component, $lang);
         return isset($string[$identifier]);
@@ -7304,10 +7305,6 @@ class install_string_manager implements string_manager {
      * @return boot true if exists
      */
     public function string_exists($identifier, $component) {
-        $identifier = clean_param($identifier, PARAM_STRINGID);
-        if (empty($identifier)) {
-            return false;
-        }
         // simple old style hack ;)
         $str = get_string($identifier, $component);
         return (strpos($str, '[[') === false);
@@ -7565,8 +7562,7 @@ function get_string($identifier, $component = '', $a = NULL, $lazyload = false) 
         return new lang_string($identifier, $component, $a);
     }
 
-    $identifier = clean_param($identifier, PARAM_STRINGID);
-    if (empty($identifier)) {
+    if (debugging('', DEBUG_DEVELOPER) && clean_param($identifier, PARAM_STRINGID) === '') {
         throw new coding_exception('Invalid string identifier. The identifier cannot be empty. Please fix your get_string() call.');
     }
 
@@ -8288,6 +8284,15 @@ function get_plugin_types($fullpaths=true) {
 }
 
 /**
+ * This method validates a plug name. It is much faster than calling clean_param.
+ * @param string $name a string that might be a plugin name.
+ * @return bool if this string is a valid plugin name.
+ */
+function is_valid_plugin_name($name) {
+    return (bool) preg_match('/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]$/', $name);
+}
+
+/**
  * Simplified version of get_list_of_plugins()
  * @param string $plugintype type of plugin
  * @return array name=>fulllocation pairs of plugins of given type
@@ -8359,9 +8364,8 @@ function get_plugin_list($plugintype) {
             if (in_array($pluginname, $ignored)) {
                 continue;
             }
-            $pluginname = clean_param($pluginname, PARAM_PLUGIN);
-            if (empty($pluginname)) {
-                // better ignore plugins with problematic names here
+            if (!is_valid_plugin_name($pluginname)) {
+                // Better ignore plugins with problematic names here.
                 continue;
             }
             $result[$pluginname] = $fulldir.'/'.$pluginname;
@@ -11416,7 +11420,7 @@ class lang_string {
         // Check if we need to process the string
         if ($this->string === null) {
             // Check the quality of the identifier.
-            if (clean_param($this->identifier, PARAM_STRINGID) == '') {
+            if (debugging('', DEBUG_DEVELOPER) && clean_param($this->identifier, PARAM_STRINGID) === '') {
                 throw new coding_exception('Invalid string identifier. Most probably some illegal character is part of the string identifier. Please check your string definition');
             }
 

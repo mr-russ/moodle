@@ -354,8 +354,11 @@ class assign {
         $o = '';
         $mform = null;
         $notices = array();
+        $nextpageparams = array();
 
-        $nextpageparams = array('id'=>$this->get_course_module()->id);
+        if (!empty($this->get_course_module()->id)) {
+            $nextpageparams['id'] = $this->get_course_module()->id;
+        }
 
         // Handle form submissions first.
         if ($action == 'savesubmission') {
@@ -516,7 +519,7 @@ class assign {
         $update->courseid = $formdata->course;
         $update->intro = $formdata->intro;
         $update->introformat = $formdata->introformat;
-        $update->alwaysshowdescription = $formdata->alwaysshowdescription;
+        $update->alwaysshowdescription = !empty($formdata->alwaysshowdescription);
         $update->submissiondrafts = $formdata->submissiondrafts;
         $update->requiresubmissionstatement = $formdata->requiresubmissionstatement;
         $update->sendnotifications = $formdata->sendnotifications;
@@ -837,7 +840,7 @@ class assign {
         $update->course = $formdata->course;
         $update->intro = $formdata->intro;
         $update->introformat = $formdata->introformat;
-        $update->alwaysshowdescription = $formdata->alwaysshowdescription;
+        $update->alwaysshowdescription = !empty($formdata->alwaysshowdescription);
         $update->submissiondrafts = $formdata->submissiondrafts;
         $update->requiresubmissionstatement = $formdata->requiresubmissionstatement;
         $update->sendnotifications = $formdata->sendnotifications;
@@ -846,7 +849,9 @@ class assign {
         $update->cutoffdate = $formdata->cutoffdate;
         $update->allowsubmissionsfromdate = $formdata->allowsubmissionsfromdate;
         $update->grade = $formdata->grade;
-        $update->completionsubmit = !empty($formdata->completionsubmit);
+        if (!empty($formdata->completionunlocked)) {
+            $update->completionsubmit = !empty($formdata->completionsubmit);
+        }
         $update->teamsubmission = $formdata->teamsubmission;
         $update->requireallteammemberssubmit = $formdata->requireallteammemberssubmit;
         $update->teamsubmissiongroupingid = $formdata->teamsubmissiongroupingid;
@@ -2242,6 +2247,8 @@ class assign {
 
         // More efficient to load this here.
         require_once($CFG->libdir.'/filelib.php');
+
+        require_capability('mod/assign:grade', $this->context);
 
         // Load all users with submit.
         $students = get_enrolled_users($this->context, "mod/assign:submit");

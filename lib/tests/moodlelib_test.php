@@ -797,6 +797,21 @@ class moodlelib_testcase extends advanced_testcase {
         $this->assertSame(clean_param('user_', PARAM_COMPONENT), '');
     }
 
+    function test_is_valid_plugin_name() {
+        $this->assertTrue(is_valid_plugin_name('forum'));
+        $this->assertTrue(is_valid_plugin_name('forum2'));
+        $this->assertTrue(is_valid_plugin_name('online_users'));
+        $this->assertTrue(is_valid_plugin_name('blond_online_users'));
+        $this->assertFalse(is_valid_plugin_name('online__users'));
+        $this->assertFalse(is_valid_plugin_name('forum '));
+        $this->assertFalse(is_valid_plugin_name('forum.old'));
+        $this->assertFalse(is_valid_plugin_name('xx-yy'));
+        $this->assertFalse(is_valid_plugin_name('2xx'));
+        $this->assertFalse(is_valid_plugin_name('Xx'));
+        $this->assertFalse(is_valid_plugin_name('_xx'));
+        $this->assertFalse(is_valid_plugin_name('xx_'));
+    }
+
     function test_clean_param_plugin() {
         // please note the cleaning of plugin names is very strict, no guessing here
         $this->assertSame(clean_param('forum', PARAM_PLUGIN), 'forum');
@@ -2427,6 +2442,20 @@ class moodlelib_testcase extends advanced_testcase {
         $result = get_max_upload_sizes($sitebytes, $coursebytes, $modulebytes, $custombytes);
 
         $this->assertEquals(3, count($result));
+
+        // Test site limit only.
+        $sitebytes = 51200;
+        $result = get_max_upload_sizes($sitebytes);
+
+        $this->assertEquals('Site upload limit (50KB)', $result['0']);
+        $this->assertEquals('50KB', $result['51200']);
+        $this->assertEquals('10KB', $result['10240']);
+        $this->assertCount(3, $result);
+
+        // Test no limit.
+        $result = get_max_upload_sizes();
+        $this->assertArrayHasKey('0', $result);
+        $this->assertArrayHasKey(get_max_upload_file_size(), $result);
     }
 
     /**

@@ -366,13 +366,6 @@ class tool_installaddon_installer {
             'ssl_verifyhost' => 2,
         );
 
-        $cacertfile = $CFG->dataroot.'/moodleorgca.crt';
-        if (is_readable($cacertfile)) {
-            // Do not use CA certs provided by the operating system. Instead,
-            // use this CA cert to verify the ZIP provider.
-            $options['cainfo'] = $cacertfile;
-        }
-
         $curl = new curl(array('proxy' => true));
 
         $result = $curl->download_one($source, null, $options);
@@ -393,6 +386,52 @@ class tool_installaddon_installer {
             throw new tool_installaddon_installer_exception('err_curl_ssl_verify', array(
                 'url' => $source, 'ssl_verify_result' => $curlinfo['ssl_verify_result']));
         }
+    }
+
+    /**
+     * Moves the given source into a new location recursively
+     *
+     * This is cross-device safe implementation to be used instead of the native rename() function.
+     * See https://bugs.php.net/bug.php?id=54097 for more details.
+     *
+     * @param string $source full path to the existing directory
+     * @param string $target full path to the new location of the directory
+     */
+    public function move_directory($source, $target) {
+
+        if (file_exists($target)) {
+            throw new tool_installaddon_installer_exception('err_folder_already_exists', array('path' => $target));
+        }
+
+        if (is_dir($source)) {
+            $handle = opendir($source);
+        } else {
+            throw new tool_installaddon_installer_exception('err_no_such_folder', array('path' => $source));
+        }
+
+        make_writable_directory($target);
+
+        while ($filename = readdir($handle)) {
+            $sourcepath = $source.'/'.$filename;
+            $targetpath = $target.'/'.$filename;
+
+            if ($filename === '.' or $filename === '..') {
+                continue;
+            }
+
+            if (is_dir($sourcepath)) {
+                $this->move_directory($sourcepath, $targetpath);
+
+            } else {
+                rename($sourcepath, $targetpath);
+            }
+        }
+
+        closedir($handle);
+
+        rmdir($source);
+
+        clearstatcache();
     }
 
     //// End of external API ///////////////////////////////////////////////////
