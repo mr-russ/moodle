@@ -112,6 +112,21 @@ class grade_export_txt extends grade_export {
 
         exit;
     }
+
+    public function format_column_name($grade_item, $feedback=false) {
+        if ($grade_item->itemtype == 'mod') {
+            $name = get_string('modulename', $grade_item->itemmodule).get_string('labelsep', 'langconfig').$grade_item->get_name(true);
+        } else {
+            $name = $grade_item->get_name();
+        }
+
+        if ($feedback) {
+            $name .= ' ('.get_string('feedback').')';
+        }
+
+        return strip_tags($name);
+    }
+
 }
 
 
