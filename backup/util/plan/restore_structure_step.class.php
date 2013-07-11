@@ -202,7 +202,7 @@ abstract class restore_structure_step extends restore_step {
      * @param mixed $ifnotfound what to return if $oldid wasnt found. Defaults to false
      */
     public function get_mappingid($itemname, $oldid, $ifnotfound = false) {
-        $mapping = $this->get_mapping($itemname, $oldid);
+        $mapping = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), $itemname, $oldid);
         return $mapping ? $mapping->newitemid : $ifnotfound;
     }
 

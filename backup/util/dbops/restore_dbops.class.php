@@ -29,37 +29,24 @@
  */
 abstract class restore_dbops {
     /**
-     * Keep cache of backup records.
-     * @var array
-     * @todo MDL-25290 static should be replaced with MUC code.
+     * Keep a cache of backup ids.
+     *
+     * maxsize is chosen at the current value because in testing question bank loading, we've seen 8k questions and
+     * we have get_mappingid requests in the order of 50k of which most result in a false outcome.
+     * Key size is sha1, and data size is; 224 bytes, plus any info.  Which can be any size.
+     * @var cache
      */
-    private static $backupidscache = array();
-    /**
-     * Keep track of backup ids which are cached.
-     * @var array
-     * @todo MDL-25290 static should be replaced with MUC code.
-     */
-    private static $backupidsexist = array();
-    /**
-     * Count is expensive, so manually keeping track of
-     * backupidscache, to avoid memory issues.
-     * @var int
-     * @todo MDL-25290 static should be replaced with MUC code.
-     */
-    private static $backupidscachesize = 2048;
-    /**
-     * Count is expensive, so manually keeping track of
-     * backupidsexist, to avoid memory issues.
-     * @var int
-     * @todo MDL-25290 static should be replaced with MUC code.
-     */
-    private static $backupidsexistsize = 10240;
-    /**
-     * Slice backupids cache to add more data.
-     * @var int
-     * @todo MDL-25290 static should be replaced with MUC code.
-     */
-    private static $backupidsslice = 512;
+    private static $backupidscache = null;
+    private static $backupidsrecordcache = null;
+
+    private static function setup_backup_ids_cache() {
+        if (!isset(self::$backupidscache)) {
+            self::$backupidscache = cache::make_from_params(cache_store::MODE_REQUEST, 'core', 'restore_dbops_backupids', array(), array('simplekeys' => true, 'simpledata' => true, 'maxsize' => 75000));
+        }
+        if (!isset(self::$backupidsrecordcache)) {
+            self::$backupidsrecordcache = cache::make_from_params(cache_store::MODE_REQUEST, 'core', 'restore_dbops_backupidsrecords', array(), array('simplekeys' => true, 'simpledata' => false, 'maxsize' => 2048));
+        }
+    }
 
     /**
      * Return one array containing all the tasks that have been included
@@ -188,30 +175,37 @@ abstract class restore_dbops {
      * @param int $restoreid id of backup
      * @param string $itemname name of the item
      * @param int $itemid id of item
-     * @return array backup id's
-     * @todo MDL-25290 replace static backupids* with MUC code
+     * @return object database record of the backup id, or false
      */
     protected static function get_backup_ids_cached($restoreid, $itemname, $itemid) {
         global $DB;
 
-        $key = "$itemid $itemname $restoreid";
+        // We need to confirm the cache is setup
+        if (!isset(self::$backupidscache)) {
+            self::setup_backup_ids_cache();
+        }
+
+        $key = sha1("$itemid $itemname $restoreid");
+        // The MUC should tell me if we have overflowed the cache
+        // at the moment, it doesn't support max size so we assume it hasn't
+        $idcacheoverflow = false;
+
+        if (!($idcache = self::$backupidscache->get($key))) {
+            $idcache['id'] = false;
+        }
 
         // If record exists in cache then return.
-        if (isset(self::$backupidsexist[$key]) && isset(self::$backupidscache[$key])) {
-            // Return a copy of cached data, to avoid any alterations in cached data.
-            return clone self::$backupidscache[$key];
+        if ($idcache['id'] === 'undef' || (!$idcache['id'] && !$idcacheoverflow)) {
+            // We know that we don't have this record.
+            if (!$idcache['id'] && !$idcacheoverflow) {
+                self::$backupidscache->set($key, array('id' => 'undef'));
+            }
+            return false;
+        } else if ($reccache = self::$backupidsrecordcache->get($key)) {
+            // The cache unreferences everything so we don't need to re-clone.
+            return $reccache;
         }
-
-        // Clean cache, if it's full.
-        if (self::$backupidscachesize <= 0) {
-            // Remove some records, to keep memory in limit.
-            self::$backupidscache = array_slice(self::$backupidscache, self::$backupidsslice, null, true);
-            self::$backupidscachesize = self::$backupidscachesize + self::$backupidsslice;
-        }
-        if (self::$backupidsexistsize <= 0) {
-            self::$backupidsexist = array_slice(self::$backupidsexist, self::$backupidsslice, null, true);
-            self::$backupidsexistsize = self::$backupidsexistsize + self::$backupidsslice;
-        }
+        // In else cases, we want to process the below, so there is no else statement.
 
         // Retrive record from database.
         $record = array(
@@ -220,12 +214,12 @@ abstract class restore_dbops {
             'itemid'   => $itemid
         );
         if ($dbrec = $DB->get_record('backup_ids_temp', $record)) {
-            self::$backupidsexist[$key] = $dbrec->id;
-            self::$backupidscache[$key] = $dbrec;
-            self::$backupidscachesize--;
-            self::$backupidsexistsize--;
+            self::$backupidscache->set($key, array('id' => $dbrec->id, 'newitemid' => $dbrec->newitemid, 'parentitemid' => $dbrec->parentitemid));
+            //self::$backupidsrecordcache->set($key, $dbrec);
             return $dbrec;
         } else {
+            // So misses don't require a db query we cache that we missed the record.
+            self::$backupidscache->set($key, array('id' => 'undef'));
             return false;
         }
     }
@@ -238,12 +232,16 @@ abstract class restore_dbops {
      * @param int $itemid id of item
      * @param array $extrarecord extra record which needs to be updated
      * @return void
-     * @todo MDL-25290 replace static BACKUP_IDS_* with MUC code
      */
     protected static function set_backup_ids_cached($restoreid, $itemname, $itemid, $extrarecord) {
         global $DB;
 
-        $key = "$itemid $itemname $restoreid";
+        // We need to confirm the cache is setup
+        if (!isset(self::$backupidscache)) {
+            self::setup_backup_ids_cache();
+        }
+
+        $key = sha1("$itemid $itemname $restoreid");
 
         $record = array(
             'backupid' => $restoreid,
@@ -251,31 +249,54 @@ abstract class restore_dbops {
             'itemid'   => $itemid,
         );
 
-        // If record is not cached then add one.
-        if (!isset(self::$backupidsexist[$key])) {
-            // If we have this record in db, then just update this.
-            if ($existingrecord = $DB->get_record('backup_ids_temp', $record)) {
-                self::$backupidsexist[$key] = $existingrecord->id;
-                self::$backupidsexistsize--;
-                self::update_backup_cached_record($record, $extrarecord, $key, $existingrecord);
-            } else {
-                // Add new record to cache and db.
-                $recorddefault = array (
-                    'newitemid' => 0,
-                    'parentitemid' => null,
-                    'info' => null);
-                $record = array_merge($record, $recorddefault, $extrarecord);
-                $record['id'] = $DB->insert_record('backup_ids_temp', $record);
-                self::$backupidsexist[$key] = $record['id'];
-                self::$backupidsexistsize--;
-                if (self::$backupidscachesize > 0) {
-                    // Cache new records if we haven't got many yet.
-                    self::$backupidscache[$key] = (object) $record;
-                    self::$backupidscachesize--;
-                }
-            }
+        $idcache = self::$backupidscache->get($key);
+        if (!$idcache) {
+            $idcache['id'] = false;
+        }
+        $recordcache = self::$backupidsrecordcache->get($key);
+        $existingrecord = false;
+
+        // Track if we are inserting or updating.
+        $insert = null;
+        // The MUC should tell me if we have overflowed the cache
+        // at the moment, it doesn't support max size so we assume it hasn't
+        $idcacheoverflow = false;
+
+        // If the id is cached as undef, we know it's an insert.
+        if ($idcache['id'] === 'undef') {
+            $insert = true;
+        } else if ($recordcache !== false) {
+            // If we have the record, we know know we are updating.
+            $insert = false;
+            $record = (array)$recordcache;
+        } else if ($idcache['id']) {
+            // We don't have the record cached, but we do have the id.
+            $insert = false;
+            $record['id'] = $idcache['id'];
+        } else if (!$idcache['id'] && !$idcacheoverflow) {
+            // If the cache hasn't discarded any data, we can trust it about whether this id has been created.
+            $insert = true;
+        } else if ($existingrecord = $DB->get_record('backup_ids_temp', $record)) {
+            // We werent' sure of the status due to idcache overflow, so we need to asked the database.
+            $insert = false;
+            $record['id'] = $existingrecord->id;
         } else {
-            self::update_backup_cached_record($record, $extrarecord, $key);
+            // Finally, the database doesn't have a record, we are inserting.
+            $insert = true;
+        }
+
+        if ($insert) { 
+            // Add new record to cache and db.
+            $recorddefault = array (
+                'newitemid' => 0,
+                'parentitemid' => null,
+                'info' => null);
+            $record = array_merge($record, $recorddefault, $extrarecord);
+            $record['id'] = $DB->insert_record('backup_ids_temp', $record);
+            self::$backupidscache->set($key, array('id' => $record['id'], 'newitemid' => $record['newitemid'], 'parentitemid' => $record['parentitemid']));
+            //self::$backupidsrecordcache->set($key, (object) $record);
+        } else {
+            self::update_backup_cached_record($record, $extrarecord, $key, $existingrecord);
         }
     }
 
@@ -287,26 +308,38 @@ abstract class restore_dbops {
      * @param string $key unique key which is used to identify cached record
      * @param stdClass $existingrecord (optional) existing record
      */
-    protected static function update_backup_cached_record($record, $extrarecord, $key, $existingrecord = null) {
+    protected static function update_backup_cached_record($record, $extrarecord, $key, $existingrecord = false) {
         global $DB;
+
+        // We need to confirm the cache is setup
+        if (!isset(self::$backupidscache)) {
+            self::setup_backup_ids_cache();
+        }
+
         // Update only if extrarecord is not empty.
         if (!empty($extrarecord)) {
-            $extrarecord['id'] = self::$backupidsexist[$key];
+            $extrarecord['id'] = $record['id'];
             $DB->update_record('backup_ids_temp', $extrarecord);
-            // Update existing cache or add new record to cache.
-            if (isset(self::$backupidscache[$key])) {
-                $record = array_merge((array)self::$backupidscache[$key], $extrarecord);
-                self::$backupidscache[$key] = (object) $record;
-            } else if (self::$backupidscachesize > 0) {
+
+            // Update existing cache, don't add it as the record may change again if it needs a db call.
+            $recordcache = self::$backupidsrecordcache->get($key);
+
+            if ($recordcache !== false) {
+                // We have a fully cached record to update.
+                $record = array_merge((array)$recordcache, $extrarecord);
+            self::$backupidscache->set($key, array('id' => $record['id'], 'newitemid' => $record['newitemid'], 'parentitemid' => $record['parentitemid']));
+                //self::$backupidsrecordcache->set($key, (object) $record);
+            } else {
                 if ($existingrecord) {
-                    self::$backupidscache[$key] = $existingrecord;
+                    // Merge the current db record, with the added data.  This may have been done in previous steps.
+                    $record = array_merge((array)$existingrecord, $extrarecord);
+            self::$backupidscache->set($key, array('id' => $record['id'], 'newitemid' => $record['newitemid'], 'parentitemid' => $record['parentitemid']));
+                    //self::$backupidsrecordcache->set($key, (object) $record);
                 } else {
-                    // Retrive record from database and cache updated records.
-                    self::$backupidscache[$key] = $DB->get_record('backup_ids_temp', $record);
+                    // We would have to ask the db for results here, so delete and wait for another cache opportunity
+                    // when we know somebody actually needs the data.
+                    self::$backupidsrecordcache->delete($key);
                 }
-                $record = array_merge((array)self::$backupidscache[$key], $extrarecord);
-                self::$backupidscache[$key] = (object) $record;
-                self::$backupidscachesize--;
             }
         }
     }
@@ -326,14 +359,12 @@ abstract class restore_dbops {
      * @todo MDL-25290 static should be replaced with MUC code.
      */
     public static function reset_backup_ids_cached() {
-        // Reset the ids cache.
-        $cachetoadd = count(self::$backupidscache);
-        self::$backupidscache = array();
-        self::$backupidscachesize = self::$backupidscachesize + $cachetoadd;
-        // Reset the exists cache.
-        $existstoadd = count(self::$backupidsexist);
-        self::$backupidsexist = array();
-        self::$backupidsexistsize = self::$backupidsexistsize + $existstoadd;
+        // We need to confirm the cache is setup
+        if (!isset(self::$backupidscache)) {
+            self::setup_backup_ids_cache();
+        }
+        self::$backupidscache->purge();
+        self::$backupidsrecordcache->purge();
     }
 
     /**
@@ -1516,6 +1547,25 @@ abstract class restore_dbops {
         }
 
         self::set_backup_ids_cached($restoreid, $itemname, $itemid, $extrarecord);
+    }
+
+
+    public static function get_backup_ids_mappings($restoreid, $itemname, $itemid) {
+        // Look in cache, if there, return data if not use get_backup_ids_record.
+        // We have a separate function as we don't want to send/request the entire record if possible.
+        $key = sha1("$itemid $itemname $restoreid");
+
+        $idcache = self::$backupidscache->get($key);
+        if (!$idcache) {
+            // Not cached, go find it and return that.  It does all the caching so we don't.
+            return self::get_backup_ids_record($restoreid, $itemname, $itemid);
+        } else if ($idcache['id'] == 'undef') {
+            // We know we don't have it, return false.
+            return false;
+        } else {
+            return (object)$idcache;
+        }
+
     }
 
     public static function get_backup_ids_record($restoreid, $itemname, $itemid) {
