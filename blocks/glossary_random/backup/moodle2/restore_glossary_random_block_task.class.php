@@ -62,7 +62,7 @@ class restore_glossary_random_block_task extends restore_block_task {
             $config = unserialize(base64_decode($configdata));
             if (!empty($config->glossary)) {
                 // Get glossary mapping and replace it in config
-                if ($glossarymap = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'glossary', $config->glossary)) {
+                if ($glossarymap = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'glossary', $config->glossary)) {
                     $config->glossary = $glossarymap->newitemid;
                     $configdata = base64_encode(serialize($config));
                     $DB->set_field('block_instances', 'configdata', $configdata, array('id' => $blockid));

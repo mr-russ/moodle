@@ -69,7 +69,7 @@ class restore_quiz_results_block_task extends restore_block_task {
             $config = unserialize(base64_decode($configdata));
             if (!empty($config->quizid)) {
                 // Get quiz mapping and replace it in config
-                if ($quizmap = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'quiz', $config->quizid)) {
+                if ($quizmap = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'quiz', $config->quizid)) {
                     $config->quizid = $quizmap->newitemid;
                     $configdata = base64_encode(serialize($config));
                     $DB->set_field('block_instances', 'configdata', $configdata, array('id' => $blockid));

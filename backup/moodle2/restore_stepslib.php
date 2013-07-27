@@ -518,7 +518,7 @@ class restore_review_pending_block_positions extends restore_execution_step {
             // If position is for one already mapped (known) contextid
             // process it now, creating the position, else nothing to
             // do, position finally discarded
-            if ($newctx = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'context', $position->contextid)) {
+            if ($newctx = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'context', $position->contextid)) {
                 $position->contextid = $newctx->newitemid;
                 // Create the block position
                 $DB->insert_record('block_positions', $position);
@@ -554,7 +554,7 @@ class restore_process_course_modules_availability extends restore_execution_step
             $availability = backup_controller_dbops::decode_backup_temp_info($availrec->info);
             // Map the sourcecmid if needed and possible
             if (!empty($availability->sourcecmid)) {
-                $newcm = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'course_module', $availability->sourcecmid);
+                $newcm = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'course_module', $availability->sourcecmid);
                 if ($newcm) {
                     $availability->sourcecmid = $newcm->newitemid;
                 } else {
@@ -563,7 +563,7 @@ class restore_process_course_modules_availability extends restore_execution_step
             }
             // Map the gradeitemid if needed and possible
             if (!empty($availability->gradeitemid)) {
-                $newgi = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'grade_item', $availability->gradeitemid);
+                $newgi = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'grade_item', $availability->gradeitemid);
                 if ($newgi) {
                     $availability->gradeitemid = $newgi->newitemid;
                 } else {
@@ -632,7 +632,7 @@ class restore_load_included_files extends restore_structure_step {
         //   - it is one "user", "group", "grouping", "grade", "question" or "qtype_xxxx" component file (that aren't sent to inforef ever)
         // TODO: qtype_xxx should be replaced by proper backup_qtype_plugin::get_components_and_fileareas() use,
         //       but then we'll need to change it to load plugins itself (because this is executed too early in restore)
-        $isfileref   = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'fileref', $data->id);
+        $isfileref   = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'fileref', $data->id);
         $iscomponent = ($data->component == 'user' || $data->component == 'group' || $data->component == 'badges' ||
                         $data->component == 'grouping' || $data->component == 'grade' ||
                         $data->component == 'question' || substr($data->component, 0, 5) == 'qtype');
@@ -3503,7 +3503,7 @@ class restore_move_module_questions_categories extends restore_execution_step {
         $contexts = restore_dbops::restore_get_question_banks($this->get_restoreid(), CONTEXT_MODULE);
         foreach ($contexts as $contextid => $contextlevel) {
             // Only if context mapping exists (i.e. the module has been restored)
-            if ($newcontext = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'context', $contextid)) {
+            if ($newcontext = restore_dbops::get_backup_ids_mappings($this->get_restoreid(), 'context', $contextid)) {
                 // Update all the qcats having their parentitemid set to the original contextid
                 $modulecats = $DB->get_records_sql("SELECT itemid, newitemid
                                                       FROM {backup_ids_temp}

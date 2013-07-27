@@ -194,7 +194,7 @@ class restore_log_rule implements processable {
 
                  // Last chance, fetch value from backup_ids_temp, via mapping
                 } else {
-                    if ($mapping = restore_dbops::get_backup_ids_record($this->restoreid, $plaintoken, $value)) {
+                    if ($mapping = restore_dbops::get_backup_ids_mappings($this->restoreid, $plaintoken, $value)) {
                         $this->allpairs[$token] = $mapping->newitemid;
                     }
                 }

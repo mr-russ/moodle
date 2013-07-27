@@ -105,14 +105,14 @@ class restore_decode_rule {
 // Protected API starts here
 
     /**
-     * Looks for mapping values in backup_ids table, simple wrapper over get_backup_ids_record
+     * Looks for mapping values in backup_ids table, simple wrapper over get_backup_ids_mappings
      */
     protected function get_mapping($itemname, $itemid) {
         // Check restoreid is set
         if (!$this->restoreid) {
             throw new restore_decode_rule_exception('decode_rule_restoreid_not_set');
         }
-        if (!$found = restore_dbops::get_backup_ids_record($this->restoreid, $itemname, $itemid)) {
+        if (!$found = restore_dbops::get_backup_ids_mappings($this->restoreid, $itemname, $itemid)) {
             return false;
         }
         return $found->newitemid;
