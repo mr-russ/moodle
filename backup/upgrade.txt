@@ -13,6 +13,10 @@ information provided here is intended especially for developers.
   of the encoding has changed.  These new functions encapsulate any future
   changes to the encoding.
 
+* get_mapping() no longer returns the full record, only newitemid and parentitemid
+  If you need the other information, use get_backup_ids_record. get_mapping is heavily
+  cached and it's the preferred function to use where possible.
+
 === 2.5 ===
 
 * New optional param $sortby in backup set_source_table() allows to

@@ -3277,6 +3277,7 @@ class restore_create_categories_and_questions extends restore_structure_step {
         $oldid = $data->id;
 
         // Check we have one mapping for this category
+        // FIXME (mr-russ): this is a use of the entire get_backup_ids_record, not mapping!
         if (!$mapping = $this->get_mapping('question_category', $oldid)) {
             return self::SKIP_ALL_CHILDREN; // No mapping = this category doesn't need to be created/mapped
         }
