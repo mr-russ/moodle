@@ -240,6 +240,8 @@ abstract class restore_dbops {
         if ($idcache) {
             // Item is in the cache, update using id.
             $insert = false;
+            // if array_merge == original, then return. nothing to dp.
+            // print warning to start so we know we are duplicating work.  see how often
             $record['id'] = $idcache['id'];
         } else if (!$idcache && self::$backupidsinserts < self::ID_CACHE_SIZE_LIMIT) {
             // Item not in the cache and we haven't overflowed.
@@ -252,6 +254,8 @@ abstract class restore_dbops {
                 // The data is in the database, just not in the cache, updating.
                 $insert = false;
                 $record['id'] = $existingrecord->id;
+                // if array_merge == original, then return. nothing to dp.
+                // print warning to start so we know we are duplicating work.  see how often
             } else {
                 $insert = true;
             }
