@@ -3276,8 +3276,7 @@ class restore_create_categories_and_questions extends restore_structure_step {
         $data = (object)$data;
         $oldid = $data->id;
 
-        // Check we have one mapping for this category
-        // FIXME (mr-russ): this is a use of the entire get_backup_ids_record, not mapping!
+        // Check we have one mapping for this category.
         if (!$mapping = $this->get_mapping('question_category', $oldid)) {
             return self::SKIP_ALL_CHILDREN; // No mapping = this category doesn't need to be created/mapped
         }
@@ -3290,17 +3289,19 @@ class restore_create_categories_and_questions extends restore_structure_step {
         // Arrived here, newitemid = 0, we need to create the category
         // we'll do it at parentitemid context, but for CONTEXT_MODULE
         // categories, that will be created at CONTEXT_COURSE and moved
-        // to module context later when the activity is created
+        // to module context later when the activity is created.
+        // We now get the full record so we can access info. Records aren't cached, so we don't get it earlier.
+        $mapping = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'question_category', $oldid);
         if ($mapping->info->contextlevel == CONTEXT_MODULE) {
             $mapping->parentitemid = $this->get_mappingid('context', $this->task->get_old_contextid());
         }
         $data->contextid = $mapping->parentitemid;
 
-        // Let's create the question_category and save mapping
+        // Let's create the question_category and save mapping.
         $newitemid = $DB->insert_record('question_categories', $data);
         $this->set_mapping('question_category', $oldid, $newitemid);
         // Also annotate them as question_category_created, we need
-        // that later when remapping parents
+        // that later when remapping parents.
         $this->set_mapping('question_category_created', $oldid, $newitemid, false, null, $data->contextid);
     }
 
