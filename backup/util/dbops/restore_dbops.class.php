@@ -38,6 +38,9 @@ abstract class restore_dbops {
      */
     private static $backupidscache = null;
     private static $backupidsinserts = 0;
+    // Measurement on a 64bit system php 5.3.10  the structure uses 1k when stored in array[sha1][0] = serialized version.
+    // With that in mind, if we decide we can use 30% of extra RAM (why pick this number?) then we have
+    // floor((get_memory_available / 1000) *.3) slots available.
     const ID_CACHE_SIZE_LIMIT = 75000;
 
     private static function setup_backup_ids_cache() {
