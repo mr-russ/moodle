@@ -909,7 +909,7 @@ abstract class restore_dbops {
             $newcontextid = $forcenewcontextid;
         } else {
             // Get new context, must exist or this will fail
-            $newcontextrecord = self::get_backup_ids_record($restoreid, 'context', $oldcontextid);
+            $newcontextrecord = self::get_backup_ids_mappings($restoreid, 'context', $oldcontextid);
             if (!$newcontextrecord || !$newcontextrecord->newitemid) {
                 throw new restore_dbops_exception('unknown_context_mapping', $oldcontextid);
             }
@@ -979,7 +979,7 @@ abstract class restore_dbops {
             }
 
             // set the best possible user
-            $mappeduser = self::get_backup_ids_record($restoreid, 'user', $file->userid);
+            $mappeduser = self::get_backup_ids_mappings($restoreid, 'user', $file->userid);
             $mappeduserid = !empty($mappeduser) ? $mappeduser->newitemid : $dfltuserid;
 
             // dir found (and not root one), let's create it

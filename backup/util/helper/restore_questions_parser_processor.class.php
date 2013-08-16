@@ -70,7 +70,7 @@ class restore_questions_parser_processor extends grouped_parser_processor {
         }
 
         // Only load it if needed (exist same question_categoryref itemid in table)
-        if (restore_dbops::get_backup_ids_record($this->restoreid, 'question_categoryref', $this->lastcatid)) {
+        if (restore_dbops::get_backup_ids_mappings($this->restoreid, 'question_categoryref', $this->lastcatid)) {
             restore_dbops::set_backup_ids_record($this->restoreid, $itemname, $itemid, 0, $parentitemid, $info);
         }
     }
