@@ -1,6 +1,12 @@
 This files describes API changes in /backup/*,
 information provided here is intended especially for developers.
 
+=== 2.9 ===
+
+* get_mapping() no longer returns the full record, only newitemid and parentitemid
+  If you need the other information, use get_backup_ids_record. get_mapping is
+  cached and it's the preferred function to use where possible.
+
 === 2.6 ===
 
 * The backup_controller_dbops::create_temptable_from_real_table()

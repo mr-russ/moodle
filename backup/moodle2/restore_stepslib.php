@@ -4577,7 +4577,7 @@ abstract class restore_questions_activity_structure_step extends restore_activit
 
         $data = (object)$data;
         $oldid = $data->id;
-        $question = $this->get_mapping('question', $data->questionid);
+        $question = restore_dbops::get_backup_ids_record($this->get_restoreid(), 'question', $data->questionid);
 
         $data->questionusageid = $this->get_new_parentid($nameprefix . 'question_usage');
         $data->questionid      = $question->newitemid;
