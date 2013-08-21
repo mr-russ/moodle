@@ -62,8 +62,8 @@ class restore_dbops_testcase extends advanced_testcase {
         // Get that mapping and verify everything is returned as expected.
         $result = restore_dbops::get_backup_ids_record($restoreid, $mapping->itemname, $mapping->itemid);
         $this->assertSame($mapping->itemname, $result->itemname);
-        $this->assertSame($mapping->itemid, $result->itemid);
-        $this->assertSame(0, $result->newitemid);
+        $this->assertEquals($mapping->itemid, $result->itemid);
+        $this->assertEquals(0, $result->newitemid);
         $this->assertSame(null, $result->parentitemid);
         $this->assertSame(null, $result->info);
 
@@ -71,24 +71,22 @@ class restore_dbops_testcase extends advanced_testcase {
         $dbman->drop_table(new xmldb_table('backup_ids_temp'));
         $dbman->drop_table(new xmldb_table('backup_files_temp'));
 
-        // Verify the mapping continues returning the same info,
-        // now from cache (the table does not exist).
-        $result = restore_dbops::get_backup_ids_record($restoreid, $mapping->itemname, $mapping->itemid);
-        $this->assertSame($mapping->itemname, $result->itemname);
-        $this->assertSame($mapping->itemid, $result->itemid);
-        $this->assertSame(0, $result->newitemid);
+        // Verify the mapping continues returning the cached info.
+        // Even though the table does not exist.  We only test the parts of the data we cache.
+        $result = restore_dbops::get_backup_ids_mappings($restoreid, $mapping->itemname, $mapping->itemid);
+        $this->assertEquals(0, $result->newitemid);
         $this->assertSame(null, $result->parentitemid);
-        $this->assertSame(null, $result->info);
 
         // Recreate the temp table, just to drop it using the restore API in
         // order to check that, then, the cache becomes invalid for the same request.
         restore_controller_dbops::create_restore_temp_tables($restoreid);
         restore_controller_dbops::drop_restore_temp_tables($restoreid);
 
-        // No cached info anymore, so the mapping request will arrive to
-        // DB leading to error (temp table does not exist).
+        // No database tables exist anymore, setting values will result in an Exception.
+        // We do not test get_backup_ids_record as the cache knows the record doesn't exist and will return false.
         try {
-            $result = restore_dbops::get_backup_ids_record($restoreid, $mapping->itemname, $mapping->itemid);
+            restore_dbops::set_backup_ids_record($restoreid, $mapping->itemname, $mapping->itemid,
+                $mapping->newitemid, $mapping->parentitemid, $mapping->info);
             $this->fail('Expecting an exception, none occurred');
         } catch (Exception $e) {
             $this->assertTrue($e instanceof dml_exception);
@@ -104,19 +102,12 @@ class restore_dbops_testcase extends advanced_testcase {
         // Get that mapping and verify everything is returned as expected.
         $result = restore_dbops::get_backup_ids_record($restoreid, $mapping->itemname, $mapping->itemid);
         $this->assertSame($mapping->itemname, $result->itemname);
-        $this->assertSame($mapping->itemid, $result->itemid);
-        $this->assertSame($mapping->newitemid, $result->newitemid);
-        $this->assertSame($mapping->parentitemid, $result->parentitemid);
+        $this->assertEquals($mapping->itemid, $result->itemid);
+        $this->assertEquals($mapping->newitemid, $result->newitemid);
+        $this->assertEquals($mapping->parentitemid, $result->parentitemid);
         $this->assertSame($mapping->info, $result->info);
 
         // Finally, drop the temp tables properly and get the DB error again (memory caches empty).
         restore_controller_dbops::drop_restore_temp_tables($restoreid);
-        try {
-            $result = restore_dbops::get_backup_ids_record($restoreid, $mapping->itemname, $mapping->itemid);
-            $this->fail('Expecting an exception, none occurred');
-        } catch (Exception $e) {
-            $this->assertTrue($e instanceof dml_exception);
-            $this->assertSame('Table "backup_ids_temp" does not exist', $e->getMessage());
-        }
     }
 }
