@@ -177,7 +177,7 @@ class mock_restore_decode_rule extends restore_decode_rule {
     /**
      * Simply map each itemid by its double
      */
-    protected function get_mapping($itemname, $itemid) {
+    protected function get_mappingid($itemname, $itemid) {
         return $itemid * 2;
     }
 

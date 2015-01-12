@@ -83,7 +83,7 @@ class restore_decode_rule {
                 if (!$mappingsok) {                             // already missing some mapping, continue
                     continue;
                 }
-                if (!$target = $this->get_mapping($mappingsource, $source)) {// mapping not found, mark and continue
+                if (!$target = $this->get_mappingid($mappingsource, $source)) { // Mapping not found, mark and continue.
                     $mappingsok = false;
                     continue;
                 }
@@ -105,9 +105,9 @@ class restore_decode_rule {
 // Protected API starts here
 
     /**
-     * Looks for mapping values in backup_ids table, simple wrapper over get_backup_ids_mappings
+     * Looks for mapping values in backup_ids table, simple wrapper over get_backup_ids_mappings.
      */
-    protected function get_mapping($itemname, $itemid) {
+    protected function get_mappingid($itemname, $itemid) {
         // Check restoreid is set
         if (!$this->restoreid) {
             throw new restore_decode_rule_exception('decode_rule_restoreid_not_set');
