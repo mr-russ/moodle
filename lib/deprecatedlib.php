@@ -4367,7 +4367,8 @@ function events_is_registered($eventname, $component) {
  * @param string $eventname name of the event
  * @return int number of queued events
  */
-function events_pending_count($eventname) {
+function events_pending_count($eventname)
+{
     global $DB;
 
     debugging('events_pending_count() has been deprecated along with all Events 1 API in favour of Events 2 API,' .
@@ -4379,4 +4380,43 @@ function events_pending_count($eventname) {
              WHERE h.eventname = ?";
 
     return $DB->count_records_sql($sql, array($eventname));
+}
+
+/**
+ * Previous internal API, it was not supposed to be used anywhere.
+ *
+ * @access private
+ * @deprecated since Moodle 3.0 and removed immediately. MDL-49398.
+ * @param int $userid the id of the user
+ * @param context_course $coursecontext course context
+ * @param array $accessdata accessdata array (modified)
+ * @return void modifies $accessdata parameter
+ */
+function load_course_context($userid, context_course $coursecontext, &$accessdata) {
+    throw new coding_exception('load_course_context() is removed. Please do not use accesslib private stuff');
+}
+
+/**
+ * Previous internal API, it was not supposed to be used anywhere.
+ *
+ * @access private
+ * @deprecated since Moodle 3.0 and removed immediately. MDL-49398.
+ * @param int $roleid the id of the user
+ * @param context $context needs path!
+ * @param array $accessdata accessdata array (is modified)
+ * @return array
+ */
+function load_role_access_by_context($roleid, context $context, &$accessdata) {
+    throw new coding_exception('load_role_access_by_context() is removed. Please do not use accesslib private stuff');
+}
+
+/**
+ * Previous internal API, it was not supposed to be used anywhere.
+ *
+ * @access private
+ * @deprecated since Moodle 3.0 and removed immediately. MDL-49398.
+ * @return void
+ */
+function dedupe_user_access() {
+    throw new coding_exception('dedupe_user_access() is removed. Please do not use accesslib private stuff');
 }
