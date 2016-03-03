@@ -209,9 +209,9 @@ class cachestore_file extends cache_store implements cache_is_key_aware, cache_i
      * @return int
      */
     public static function get_supported_features(array $configuration = array()) {
-        $supported = self::SUPPORTS_DATA_GUARANTEE +
-                     self::SUPPORTS_NATIVE_TTL +
-                     self::IS_SEARCHABLE +
+        $supported = self::SUPPORTS_DATA_GUARANTEE |
+                     self::SUPPORTS_NATIVE_TTL |
+                     self::IS_SEARCHABLE |
                      self::DEREFERENCES_OBJECTS;
         return $supported;
     }
@@ -234,7 +234,7 @@ class cachestore_file extends cache_store implements cache_is_key_aware, cache_i
      * @return int
      */
     public static function get_supported_modes(array $configuration = array()) {
-        return self::MODE_APPLICATION + self::MODE_SESSION;
+        return self::MODE_APPLICATION | self::MODE_SESSION;
     }
 
     /**

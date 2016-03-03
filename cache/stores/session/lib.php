@@ -148,8 +148,8 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      * @return int
      */
     public static function get_supported_features(array $configuration = array()) {
-        return self::SUPPORTS_DATA_GUARANTEE +
-               self::SUPPORTS_NATIVE_TTL +
+        return self::SUPPORTS_DATA_GUARANTEE |
+               self::SUPPORTS_NATIVE_TTL |
                self::IS_SEARCHABLE;
     }
 
