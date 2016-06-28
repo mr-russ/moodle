@@ -1281,6 +1281,7 @@ class core_cache_testcase extends advanced_testcase {
         }
 
         $configfile = $CFG->dataroot.'/muc/config.php';
+        $configfile = $CFG->dataroot.'/muc/config.json';
 
         // That's right, we're deleting the config file.
         $this->assertTrue(@unlink($configfile));

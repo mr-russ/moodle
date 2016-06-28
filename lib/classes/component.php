@@ -1158,14 +1158,36 @@ $cache = '.var_export($cache, true).';
      * Note: we need it here because this class must be self-contained.
      *
      * @param string $file
+     * @return bool Whether the invalidation was successful or not.
      */
     public static function invalidate_opcode_php_cache($file) {
-        if (function_exists('opcache_invalidate')) {
-            if (!file_exists($file)) {
-                return;
-            }
-            opcache_invalidate($file, true);
+        if (!file_exists($file)) {
+            return false;
         }
+        if (function_exists('opcache_invalidate')) {
+            if (!opcache_invalidate($file, true)) {
+                //throw new moodle_exception('invalidate '.$file);
+            };
+        }
+    }
+
+    public static function opcache_reset($prefix = '/') {
+        if (!function_exists('opcache_get_status')) {
+            return false;
+        }
+        $opcachedata = opcache_get_status(true);
+
+        if (empty($opcachedata['scripts'])) {
+            return true;
+        }
+
+        $prefixlen = strlen($prefix);
+        foreach ($opcachedata['scripts'] as $scriptinfo) {
+            if (substr($scriptinfo['full_path'], 0, $prefixlen) === $prefix) {
+                static::invalidate_opcode_php_cache($scriptinfo['full_path']);
+            }
+        }
+        return true;
     }
 
     /**

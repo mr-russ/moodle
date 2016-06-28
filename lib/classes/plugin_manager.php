@@ -1359,16 +1359,12 @@ class core_plugin_manager {
             if (!$this->unzip_plugin_file($zipfile, $target, $pluginname)) {
                 $silent or $this->mtrace(get_string('error'));
                 $silent or $this->mtrace('Unable to unzip '.$zipfile, PHP_EOL, DEBUG_DEVELOPER);
-                if (function_exists('opcache_reset')) {
-                    opcache_reset();
-                }
+                core_component::opcache_reset($CFG->dirroot);
                 return false;
             }
             $silent or $this->mtrace($ok);
         }
-        if (function_exists('opcache_reset')) {
-            opcache_reset();
-        }
+        core_component::opcache_reset($CFG->dirroot);
 
         return true;
     }
@@ -1959,11 +1955,9 @@ class core_plugin_manager {
             $this->archive_plugin_version($plugin);
         }
 
+        core_component::opcache_reset($plugin->rootdir);
         remove_dir($plugin->rootdir);
         clearstatcache();
-        if (function_exists('opcache_reset')) {
-            opcache_reset();
-        }
     }
 
     /**

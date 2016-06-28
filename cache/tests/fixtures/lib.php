@@ -132,10 +132,10 @@ class cache_config_testing extends cache_config_writer {
      * @throws cache_exception
      * @return string The absolute path
      */
-    protected static function get_config_file_path() {
+    protected static function get_config_file_path($forcenew = false) {
         global $CFG;
         // We always use this path.
-        $configpath = $CFG->dataroot.'/muc/config.php';
+        $configpath = $CFG->dataroot.'/muc/config.json';
 
         if (!empty($CFG->altcacheconfigpath)) {
 
@@ -149,7 +149,7 @@ class cache_config_testing extends cache_config_writer {
             $path = $CFG->altcacheconfigpath;
             if (is_dir($path) && is_writable($path)) {
                 // Its a writable directory, thats fine. Convert it to a file.
-                $path = $CFG->altcacheconfigpath.'/cacheconfig.php';
+                $path = $CFG->altcacheconfigpath.'/cacheconfig.json';
             }
             if (is_readable($path)) {
                 $directory = dirname($configpath);

@@ -101,28 +101,38 @@ class cache_config {
      */
     public static function config_file_exists() {
         // Allow for late static binding by using static.
-        return file_exists(static::get_config_file_path());
+        return file_exists(static::get_config_file_path(true)) || file_exists(static::get_config_file_path());
     }
 
     /**
      * Returns the expected path to the configuration file.
      *
+     * @param bool $forcenew Force new file location during changeover
      * @return string The absolute path
      */
-    protected static function get_config_file_path() {
+    protected static function get_config_file_path($forcenew = false) {
         global $CFG;
+
         if (!empty($CFG->altcacheconfigpath)) {
             $path = $CFG->altcacheconfigpath;
             if (is_dir($path) && is_writable($path)) {
                 // Its a writable directory, thats fine.
-                return $path.'/cacheconfig.php';
+                if ($forcenew || file_exists($path.'/cacheconfig.json')) {
+                    return $path . '/cacheconfig.json';
+                } else {
+                    return $path . '/cacheconfig.php';
+                }
             } else if (is_writable(dirname($path)) && (!file_exists($path) || is_writable($path))) {
                 // Its a file, either it doesn't exist and the directory is writable or the file exists and is writable.
                 return $path;
             }
         }
         // Return the default location within dataroot.
-        return $CFG->dataroot.'/muc/config.php';
+        if ($forcenew || file_exists($CFG->dataroot.'/muc/config.json')) {
+            return $CFG->dataroot . '/muc/config.json';
+        } else {
+            return $CFG->dataroot.'/muc/config.php';
+        }
     }
 
     /**
@@ -331,8 +341,15 @@ class cache_config {
             throw new cache_exception('Default cache config could not be found. It should have already been created by now.');
         }
 
-        if (!include($cachefile)) {
-            throw new cache_exception('Unable to load the cache configuration file');
+        // We must invalidate before every read as any other server might have changed the script.
+        $configuration = json_decode(file_get_contents($cachefile), true);
+
+        if ($configuration === false) {
+            // Fall back to php inclusion.
+            core_component::invalidate_opcode_php_cache($cachefile);
+            if (!include($cachefile)) {
+                throw new cache_exception('Unable to load the cache configuration file');
+            }
         }
 
         if (!is_array($configuration)) {

@@ -601,6 +601,8 @@ class core_string_manager_standard implements core_string_manager {
      * @param bool $phpunitreset true means called from our PHPUnit integration test reset
      */
     public function reset_caches($phpunitreset = false) {
+        global $CFG;
+
         // Clear the on-disk disk with aggregated string files.
         $this->cache->purge();
         $this->menucache->purge();
@@ -619,9 +621,8 @@ class core_string_manager_standard implements core_string_manager {
         }
 
         // Lang packs use PHP files in dataroot, it is better to invalidate opcode caches.
-        if (function_exists('opcache_reset')) {
-            opcache_reset();
-        }
+        core_component::opcache_reset($CFG->langotherroot);
+        core_component::opcache_reset($CFG->langlocalroot);
     }
 
     /**

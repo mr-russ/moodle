@@ -68,7 +68,7 @@ class cache_config_writer extends cache_config {
      */
     protected function config_save() {
         global $CFG;
-        $cachefile = static::get_config_file_path();
+        $cachefile = static::get_config_file_path(true);
         $directory = dirname($cachefile);
         if ($directory !== $CFG->dataroot && !file_exists($directory)) {
             $result = make_writable_directory($directory, false);
@@ -84,7 +84,8 @@ class cache_config_writer extends cache_config {
         $configuration = $this->generate_configuration_array();
 
         // Prepare the file content.
-        $content = "<?php defined('MOODLE_INTERNAL') || die();\n \$configuration = ".var_export($configuration, true).";";
+        //$content = "<?php defined('MOODLE_INTERNAL') || die();\n \$configuration = ".var_export($configuration, true).";";
+        $content = json_encode($configuration);
 
         // We need to create a temporary cache lock instance for use here. Remember we are generating the config file
         // it doesn't exist and thus we can't use the normal API for this (it'll just try to use config).
@@ -109,8 +110,6 @@ class cache_config_writer extends cache_config {
             fclose($handle);
             $locking->unlock('configwrite', 'config');
             @chmod($cachefile, $CFG->filepermissions);
-            // Tell PHP to recompile the script.
-            core_component::invalidate_opcode_php_cache($cachefile);
         } else {
             throw new cache_exception('ex_configcannotsave', 'cache', '', null, 'Unable to open the cache config file.');
         }

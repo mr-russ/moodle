@@ -79,11 +79,6 @@ if ((isset($_GET['cache']) and $_GET['cache'] === '0')
     // Note2: the sesskey is present in all block editing hacks, we can not redirect there, so enable caching.
     define('CACHE_DISABLE_ALL', true);
 
-    // Force OPcache reset if used, we do not want any stale caches
-    // when detecting if upgrade necessary or when running upgrade.
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
-    }
     $cache = 0;
 
 } else {
@@ -94,9 +89,8 @@ require('../config.php');
 
 // Invalidate the cache of version.php in any circumstances to help core_component
 // detecting if the version has changed and component cache should be reset.
-if (function_exists('opcache_invalidate')) {
-    opcache_invalidate($CFG->dirroot . '/version.php', true);
-}
+core_component::invalidate_opcode_php_cache($CFG->dirroot . '/version.php', true);
+
 // Make sure the component cache gets rebuilt if necessary, any method that
 // indirectly calls the protected init() method is good here.
 core_component::get_core_subsystems();
