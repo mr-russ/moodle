@@ -628,6 +628,7 @@ class manager {
         self::$handler->kill_session($sid);
 
         $DB->delete_records('sessions', array('sid'=>$sid));
+        \cache_helper::remove_cache_for_session($sid);
     }
 
     /**

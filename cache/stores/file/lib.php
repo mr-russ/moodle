@@ -773,4 +773,8 @@ class cachestore_file extends cache_store implements cache_is_key_aware, cache_i
         }
         return $return;
     }
+
+    public static function ready_to_be_used_for_testing() {
+        return true;
+    }
 }

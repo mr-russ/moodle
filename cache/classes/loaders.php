@@ -730,7 +730,7 @@ class cache implements cache_loader {
     }
 
     /**
-     * Test is a cache has all of the given keys.
+     * Test if a cache has all of the given keys.
      *
      * It is strongly recommended to avoid the use of this function if not absolutely required.
      * In a high load environment the cache may well change between the test and any subsequent action (get, set, delete etc).
@@ -1579,11 +1579,6 @@ class cache_session extends cache {
     const KEY_PREFIX = 'sess_';
 
     /**
-     * This is the key used to track last access.
-     */
-    const LASTACCESS = '__lastaccess__';
-
-    /**
      * Override the cache::construct method.
      *
      * This function gets overriden so that we can process any invalidation events if need be.
@@ -1601,9 +1596,6 @@ class cache_session extends cache {
         // First up copy the loadeduserid to the current user id.
         $this->currentuserid = self::$loadeduserid;
         parent::__construct($definition, $store, $loader);
-
-        // This will trigger check tracked user. If this gets removed a call to that will need to be added here in its place.
-        $this->set(self::LASTACCESS, cache::now());
 
         if ($definition->has_invalidation_events()) {
             $lastinvalidation = $this->get('lastsessioninvalidation');
@@ -1656,18 +1648,13 @@ class cache_session extends cache {
     }
 
     /**
-     * Sets the session id for the loader.
-     */
-    protected function set_session_id() {
-        $this->sessionid = preg_replace('#[^a-zA-Z0-9_]#', '_', session_id());
-    }
-
-    /**
      * Returns the prefix used for all keys.
+     *
+     * Part of this key is used for logout, see cache/classes/helper.php if changing.
      * @return string
      */
     protected function get_key_prefix() {
-        return 'u'.$this->currentuserid.'_'.$this->sessionid;
+        return static::KEY_PREFIX.session_id().'_'.$this->currentuserid;
     }
 
     /**
@@ -1683,9 +1670,7 @@ class cache_session extends cache {
      */
     protected function parse_key($key) {
         $prefix = $this->get_key_prefix();
-        if ($key === self::LASTACCESS) {
-            return $key.$prefix;
-        }
+
         return $prefix.'_'.parent::parse_key($key);
     }
 
@@ -1705,9 +1690,7 @@ class cache_session extends cache {
             if (!is_null(self::$loadeduserid)) {
                 // Purge the data we have for the old user.
                 // This way we don't bloat the session.
-                $this->purge();
-                // Update the session id just in case!
-                $this->set_session_id();
+                $this->purge_current_user();
             }
             self::$loadeduserid = $new;
             $this->currentuserid = $new;
@@ -1715,8 +1698,6 @@ class cache_session extends cache {
             // The current user matches the loaded user but not the user last used by this cache.
             $this->purge_current_user();
             $this->currentuserid = $new;
-            // Update the session id just in case!
-            $this->set_session_id();
         }
     }
 
@@ -2047,7 +2028,7 @@ class cache_session extends cache {
     }
 
     /**
-     * Test is a cache has a key.
+     * Test if a cache has a key.
      *
      * The use of the has methods is strongly discouraged. In a high load environment the cache may well change between the
      * test and any subsequent action (get, set, delete etc).
@@ -2103,7 +2084,7 @@ class cache_session extends cache {
     }
 
     /**
-     * Test is a cache has all of the given keys.
+     * Test if a cache has all of the given keys.
      *
      * It is strongly recommended to avoid the use of this function if not absolutely required.
      * In a high load environment the cache may well change between the test and any subsequent action (get, set, delete etc).

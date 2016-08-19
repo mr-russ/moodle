@@ -53,6 +53,12 @@ class cache_config_testing extends cache_config_writer {
      *     Returns a configuration array if it could not be saved. This is a bad situation. Check your error logs.
      */
     public static function create_default_configuration($forcesave = false) {
+        $appstore = defined('TEST_CACHE_USING_APPLICATION_STORE') ? TEST_CACHE_USING_APPLICATION_STORE : null;
+        return self::create_configuration($appstore, null, null, $forcesave);
+    }
+
+    public static function create_configuration($applicationstore = null, $sessionstore = null, $requeststore = null,
+            $forcesave = false) {
         global $CFG;
         // HACK ALERT.
         // We probably need to come up with a better way to create the default stores, or at least ensure 100% that the
@@ -60,44 +66,48 @@ class cache_config_testing extends cache_config_writer {
         $writer = new self;
         $writer->configstores = self::get_default_stores();
         $writer->configdefinitions = self::locate_definitions();
-        $defaultapplication = 'default_application';
+        $defaults['application'] = isset($applicationstore) ? $applicationstore : 'default_application';
+        $defaults['session'] = isset($sessionstore) ? $sessionstore : 'default_session';
+        $defaults['request'] = isset($requeststore) ? $requeststore : 'default_request';
 
-        $appdefine = defined('TEST_CACHE_USING_APPLICATION_STORE') ? TEST_CACHE_USING_APPLICATION_STORE : false;
-        if ($appdefine !== false && preg_match('/^[a-zA-Z][a-zA-Z0-9_]+$/', $appdefine)) {
-            $expectedstore = $appdefine;
-            $file = $CFG->dirroot.'/cache/stores/'.$appdefine.'/lib.php';
-            $class = 'cachestore_'.$appdefine;
-            if (file_exists($file)) {
-                require_once($file);
+        foreach ($defaults as $type => $store) {
+            $assignedstore = 'default_' . $type;
+            if ($store !== null && preg_match('/^[a-zA-Z][a-zA-Z0-9_]+$/', $store)) {
+                $assignedstore = $store;
+                $file = $CFG->dirroot . '/cache/stores/' . $store . '/lib.php';
+                $class = 'cachestore_' . $store;
+                if (file_exists($file)) {
+                    require_once($file);
+                }
+                if (class_exists($class) && $class::ready_to_be_used_for_testing()) {
+                    /* @var cache_store $class */
+                    $writer->configstores['test_' . $type] = array(
+                        'use_test_store' => true,
+                        'name' => 'test_'.$type,
+                        'plugin' => $store,
+                        'alt' => $writer->configstores['default_' . $type],
+                        'modes' => $class::get_supported_modes(),
+                        'features' => $class::get_supported_features()
+                    );
+                    $assignedstore = 'test_'.$type;
+                }
             }
-            if (class_exists($class) && $class::ready_to_be_used_for_testing()) {
-                /* @var cache_store $class */
-                $writer->configstores['test_application'] = array(
-                    'use_test_store' => true,
-                    'name' => 'test_application',
-                    'plugin' => $expectedstore,
-                    'alt' => $writer->configstores[$defaultapplication],
-                    'modes' => $class::get_supported_modes(),
-                    'features' => $class::get_supported_features()
-                );
-                $defaultapplication = 'test_application';
-            }
+            $defaults[$type] = $assignedstore;
         }
-
         $writer->configmodemappings = array(
             array(
                 'mode' => cache_store::MODE_APPLICATION,
-                'store' => $defaultapplication,
+                'store' => $defaults['application'],
                 'sort' => -1
             ),
             array(
                 'mode' => cache_store::MODE_SESSION,
-                'store' => 'default_session',
+                'store' => $defaults['session'],
                 'sort' => -1
             ),
             array(
                 'mode' => cache_store::MODE_REQUEST,
-                'store' => 'default_request',
+                'store' => $defaults['request'],
                 'sort' => -1
             )
         );
@@ -118,6 +128,7 @@ class cache_config_testing extends cache_config_writer {
         }
         $factory->set_state(cache_factory::STATE_SAVING);
         $writer->config_save();
+        $factory->set_state(cache_factory::STATE_READY);
         return true;
     }
 

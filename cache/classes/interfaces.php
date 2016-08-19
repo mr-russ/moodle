@@ -108,7 +108,7 @@ interface cache_loader {
     public function set_many(array $keyvaluearray);
 
     /**
-     * Test is a cache has a key.
+     * Test if a cache has a key.
      *
      * The use of the has methods is strongly discouraged. In a high load environment the cache may well change between the
      * test and any subsequent action (get, set, delete etc).
@@ -144,7 +144,7 @@ interface cache_loader {
     public function has_any(array $keys);
 
     /**
-     * Test is a cache has all of the given keys.
+     * Test if a cache has all of the given keys.
      *
      * It is strongly recommended to avoid the use of this function if not absolutely required.
      * In a high load environment the cache may well change between the test and any subsequent action (get, set, delete etc).
@@ -287,7 +287,7 @@ interface cache_is_lockable {
 interface cache_is_key_aware {
 
     /**
-     * Test is a cache has a key.
+     * Test if a cache has a key.
      *
      * The use of the has methods is strongly discouraged. In a high load environment the cache may well change between the
      * test and any subsequent action (get, set, delete etc).

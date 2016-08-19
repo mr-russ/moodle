@@ -1976,7 +1976,7 @@ class core_cache_testcase extends advanced_testcase {
         // Check that no stats are recorded for these definitions yet.
         $stats = cache_helper::get_stats();
         $this->assertArrayNotHasKey($applicationid, $stats);
-        $this->assertArrayHasKey($sessionid, $stats);       // Session cache sets a key on construct.
+        $this->assertArrayNotHasKey($sessionid, $stats);
         $this->assertArrayNotHasKey($requestid, $stats);
 
         // Check that stores register misses.
@@ -1996,7 +1996,7 @@ class core_cache_testcase extends advanced_testcase {
         $this->assertEquals(0, $endstats[$applicationid]['stores']['cachestore_file']['sets']);
         $this->assertEquals(3, $endstats[$sessionid]['stores']['cachestore_session']['misses']);
         $this->assertEquals(0, $endstats[$sessionid]['stores']['cachestore_session']['hits']);
-        $this->assertEquals(1, $endstats[$sessionid]['stores']['cachestore_session']['sets']);
+        $this->assertEquals(0, $endstats[$sessionid]['stores']['cachestore_session']['sets']);
         $this->assertEquals(4, $endstats[$requestid]['stores']['cachestore_static']['misses']);
         $this->assertEquals(0, $endstats[$requestid]['stores']['cachestore_static']['hits']);
         $this->assertEquals(0, $endstats[$requestid]['stores']['cachestore_static']['sets']);
