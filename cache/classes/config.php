@@ -342,7 +342,7 @@ class cache_config {
         }
 
         // We must invalidate before every read as any other server might have changed the script.
-        $configuration = unserialize(file_get_contents($cachefile));
+        $configuration = @unserialize(file_get_contents($cachefile));
 
         if ($configuration === false) {
             // Fall back to php inclusion.
