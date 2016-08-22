@@ -117,8 +117,8 @@ class cache_config {
             $path = $CFG->altcacheconfigpath;
             if (is_dir($path) && is_writable($path)) {
                 // Its a writable directory, thats fine.
-                if ($forcenew || file_exists($path.'/cacheconfig.json')) {
-                    return $path . '/cacheconfig.json';
+                if ($forcenew || file_exists($path.'/cacheconfig.dat')) {
+                    return $path . '/cacheconfig.dat';
                 } else {
                     return $path . '/cacheconfig.php';
                 }
@@ -128,8 +128,8 @@ class cache_config {
             }
         }
         // Return the default location within dataroot.
-        if ($forcenew || file_exists($CFG->dataroot.'/muc/config.json')) {
-            return $CFG->dataroot . '/muc/config.json';
+        if ($forcenew || file_exists($CFG->dataroot.'/muc/config.dat')) {
+            return $CFG->dataroot . '/muc/config.dat';
         } else {
             return $CFG->dataroot.'/muc/config.php';
         }
@@ -342,7 +342,7 @@ class cache_config {
         }
 
         // We must invalidate before every read as any other server might have changed the script.
-        $configuration = json_decode(file_get_contents($cachefile), true);
+        $configuration = unserialize(file_get_contents($cachefile));
 
         if ($configuration === false) {
             // Fall back to php inclusion.
