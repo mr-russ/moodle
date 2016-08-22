@@ -621,8 +621,8 @@ class core_string_manager_standard implements core_string_manager {
         }
 
         // Lang packs use PHP files in dataroot, it is better to invalidate opcode caches.
-        core_component::opcache_reset($CFG->langotherroot);
-        core_component::opcache_reset($CFG->langlocalroot);
+        //core_component::opcache_reset($CFG->langotherroot);
+        //core_component::opcache_reset($CFG->langlocalroot);
     }
 
     /**
