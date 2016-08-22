@@ -85,7 +85,7 @@ class cache_config_writer extends cache_config {
 
         // Prepare the file content.
         //$content = "<?php defined('MOODLE_INTERNAL') || die();\n \$configuration = ".var_export($configuration, true).";";
-        $content = json_encode($configuration);
+        $content = serialize($configuration);
 
         // We need to create a temporary cache lock instance for use here. Remember we are generating the config file
         // it doesn't exist and thus we can't use the normal API for this (it'll just try to use config).
