@@ -645,4 +645,15 @@ abstract class advanced_testcase extends base_testcase {
             }
         }
     }
+
+    /**
+     * Wait for a second to roll over, ensures future calls to time() return a different result.@deprecated
+     *
+     * This is implemented instead of sleep() as we do not need to wait a full second. In some cases
+     * due to calls we may wait more than sleep() would have, on average it will be less.
+     */
+    public function waitForSecond() {
+        $starttime = time();
+        while (time() == $starttime) { usleep(50000); };
+    }
 }
