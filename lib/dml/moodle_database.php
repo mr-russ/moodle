@@ -331,7 +331,7 @@ abstract class moodle_database {
      *
      * @return cache_application The databasemeta cachestore to complete operations on.
      */
-    protected function get_metacache() {
+    public function get_metacache() {
         $properties = array('dbfamily' => $this->get_dbfamily(), 'settings' => $this->get_settings_hash());
         return cache::make('core', 'databasemeta', $properties);
     }

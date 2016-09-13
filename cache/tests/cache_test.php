@@ -1314,7 +1314,7 @@ class core_cache_testcase extends advanced_testcase {
         $configfile = $CFG->dataroot.'/muc/config.php';
 
         // That's right, we're deleting the config file.
-        $this->assertFalse(@unlink($configfile));
+        $this->assertTrue(@unlink($configfile));
 
         // Disable the cache
         cache_phpunit_factory::phpunit_disable();

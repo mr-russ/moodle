@@ -75,6 +75,10 @@ abstract class advanced_testcase extends base_testcase {
             $this->testdbtransaction = $DB->start_delegated_transaction();
         }
 
+        // Now...  If we have the table structure, we just need to load it into the create cache.
+        $cache = $DB->get_metacache();
+        $cache->set_many(phpunit_util::get_tablestructure());
+
         try {
             $this->setCurrentTimeStart();
             parent::runBare();
