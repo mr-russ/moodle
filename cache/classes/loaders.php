@@ -644,6 +644,11 @@ class cache implements cache_loader {
         $simulatettl = $this->has_a_ttl() && !$this->store_supports_native_ttl();
         $usestaticaccelerationarray = $this->use_static_acceleration();
         $needsdereferencing = !$this->store->supports_dereferencing_objects();
+
+        // Only set data in static acceleration that will stay there after set_many is complete.
+        $staticsize = $this->definition->get_static_acceleration_size();
+        $staticsize = $staticsize ? $staticsize : PHP_INT_MAX;
+        $size = count($keyvaluearray);
         foreach ($keyvaluearray as $key => $value) {
             if (is_object($value) && $value instanceof cacheable_object) {
                 $value = new cache_cached_object($value);
@@ -654,7 +659,7 @@ class cache implements cache_loader {
                 // Call the function to unreference it (in the best way possible).
                 $value = $this->unref($value);
             }
-            if ($usestaticaccelerationarray) {
+            if ($usestaticaccelerationarray && $size <= $staticsize) {
                 $this->static_acceleration_set($key, $value);
             }
             if ($simulatettl) {
@@ -664,6 +669,7 @@ class cache implements cache_loader {
                 'key' => $this->parse_key($key),
                 'value' => $value
             );
+            $size--;
         }
         $successfullyset = $this->store->set_many($data);
         if ($this->perfdebug && $successfullyset) {
