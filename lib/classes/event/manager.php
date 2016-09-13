@@ -196,7 +196,7 @@ class manager {
             return;
         }
 
-        if (!PHPUNIT_TEST and !during_initial_install()) {
+        if (!during_initial_install()) {
             $cache = \cache::make('core', 'observers');
             $cached = $cache->get('all');
             $dirroot = $cache->get('dirroot');
@@ -233,7 +233,7 @@ class manager {
 
         self::order_all_observers();
 
-        if (!PHPUNIT_TEST and !during_initial_install()) {
+        if (!during_initial_install()) {
             $cache->set('all', self::$allobservers);
             $cache->set('dirroot', $CFG->dirroot);
         }
