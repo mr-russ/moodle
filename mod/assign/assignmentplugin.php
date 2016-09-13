@@ -328,8 +328,11 @@ abstract class assign_plugin {
         $current = $DB->get_record('assign_plugin_config', $dbparams, '*', IGNORE_MISSING);
 
         if ($current) {
-            $current->value = $value;
-            return $DB->update_record('assign_plugin_config', $current);
+            if ($current->value != $value) {
+                $current->value = $value;
+                return $DB->update_record('assign_plugin_config', $current);
+            }
+            return true;
         } else {
             $setting = new stdClass();
             $setting->assignment = $this->assignment->get_instance()->id;
