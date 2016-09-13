@@ -475,6 +475,13 @@ class cache_helper {
      */
     public static function purge_all($usewriter = false) {
         $factory = cache_factory::instance();
+
+        // To clear static acceleration we need to specifically purge in use caches.
+        $inuse = $factory->get_caches_in_use();
+        foreach ($inuse as $cache) {
+            $cache->purge();
+        }
+
         $config = $factory->create_config_instance($usewriter);
         foreach ($config->get_all_stores() as $store) {
             self::purge_store($store['name'], $config);
