@@ -75,6 +75,13 @@ abstract class advanced_testcase extends base_testcase {
             $this->testdbtransaction = $DB->start_delegated_transaction();
         }
 
+        // The table structure for get_columns is stored as part of database creation.
+        // We can load it directly into the cache before we start.  get_columns is called
+        // over 500k times by unit tests and this provides reduced database load and a performance
+        // improvement.
+        $cache = $DB->get_metacache();
+        $cache->set_many(phpunit_util::get_tablestructure());
+
         try {
             $this->setCurrentTimeStart();
             parent::runBare();

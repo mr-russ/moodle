@@ -43,6 +43,11 @@ require_once($CFG->dirroot.'/cache/locallib.php');
 class cache_config_testing extends cache_config_writer {
 
     /**
+     * @var array cached definitions for a single PHPUnit run.
+     */
+    private static $locateddefinitions = array();
+
+    /**
      * Creates the default configuration and saves it.
      *
      * This function calls config_save, however it is safe to continue using it afterwards as this function should only ever
@@ -59,7 +64,13 @@ class cache_config_testing extends cache_config_writer {
         // default store plugins are protected from deletion.
         $writer = new self;
         $writer->configstores = self::get_default_stores();
-        $writer->configdefinitions = self::locate_definitions();
+
+        // Definition loading is very slow as it inspects the disk for large numbers of files.  These files are all
+        // in $CFG->dirroot and won't change for a single run of the testing infrastructure.
+        if (empty(self::$locateddefinitions)) {
+            self::$locateddefinitions = self::locate_definitions();
+        }
+        $writer->configdefinitions = self::$locateddefinitions;
         $defaultapplication = 'default_application';
 
         $appdefine = defined('TEST_CACHE_USING_APPLICATION_STORE') ? TEST_CACHE_USING_APPLICATION_STORE : false;
