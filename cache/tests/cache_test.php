@@ -64,7 +64,7 @@ class core_cache_testcase extends advanced_testcase {
      */
     protected function get_expected_application_cache_store() {
         global $CFG;
-        $expected = 'cachestore_file';
+        $expected = 'cachestore_static';
 
         // Verify if we are using any of the available ways to use a different application store within tests.
         if (defined('TEST_CACHE_USING_APPLICATION_STORE') && preg_match('#[a-zA-Z][a-zA-Z0-9_]*#', TEST_CACHE_USING_APPLICATION_STORE)) {
@@ -107,18 +107,16 @@ class core_cache_testcase extends advanced_testcase {
             $this->markTestSkipped('Skipped testing default cache config structure as alt cache path is being used.');
         }
 
-        if (defined('TEST_CACHE_USING_APPLICATION_STORE')) {
-            // We need to skip this test - it checks the default config structure, but very likely we arn't using the
-            // default config structure here because we are testing against an alternative application store.
-            $this->markTestSkipped('Skipped testing default cache config structure as alt application store is being used.');
-        }
-
         $instance = cache_config::instance();
         $this->assertInstanceOf('cache_config_testing', $instance);
 
         $this->assertTrue(cache_config_testing::config_file_exists());
 
         $stores = $instance->get_all_stores();
+        // When testing with static, or a different application store, we will also get test_application which
+        // need to be ignored to check if all the default options are set correctly.
+        unset($stores['test_application']);
+
         $this->assertCount(3, $stores);
         foreach ($stores as $name => $store) {
             // Check its an array.
@@ -1316,7 +1314,7 @@ class core_cache_testcase extends advanced_testcase {
         $configfile = $CFG->dataroot.'/muc/config.php';
 
         // That's right, we're deleting the config file.
-        $this->assertTrue(@unlink($configfile));
+        $this->assertFalse(@unlink($configfile));
 
         // Disable the cache
         cache_phpunit_factory::phpunit_disable();
