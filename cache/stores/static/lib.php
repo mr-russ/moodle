@@ -60,7 +60,6 @@ abstract class static_data_store extends cache_store {
      * @param string $id
      */
     protected static function flush_store_by_id($id) {
-        unset(self::$staticstore[$id]);
         self::$staticstore[$id] = array();
     }
 

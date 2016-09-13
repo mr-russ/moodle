@@ -186,9 +186,14 @@ class cache_config {
             $class = 'cachestore_'.$plugin;
             $exists = array_key_exists($plugin, $availableplugins);
             if (!$exists) {
-                // Not a valid plugin, or has been uninstalled, just skip it an carry on.
-                debugging('Invalid cache store in config. Not an available plugin.', DEBUG_DEVELOPER);
-                continue;
+                // PHPUnit uses a special store phpunitstatic to improve testing performance.
+                // The required class inclusion is done as part of PHPUnit so it doesn't need
+                // to follow the loading cycle below.  It will automatically succeed against those checks.
+                if ($plugin != 'phpunitstatic') {
+                    // Not a valid plugin and not testing, or has been uninstalled, just skip it an carry on.
+                    debugging('Invalid cache store in config. Not an available plugin.', DEBUG_DEVELOPER);
+                    continue;
+                }
             }
             $file = $CFG->dirroot.'/cache/stores/'.$plugin.'/lib.php';
             if (!class_exists($class) && file_exists($file)) {

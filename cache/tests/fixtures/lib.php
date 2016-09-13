@@ -29,6 +29,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/cache/locallib.php');
+require_once($CFG->dirroot.'/cache/tests/fixtures/cachestore_phpunitstatic.php');
 
 /**
  * Override the default cache configuration for our own maniacal purposes.
@@ -62,7 +63,7 @@ class cache_config_testing extends cache_config_writer {
         $writer->configdefinitions = self::locate_definitions();
         $defaultapplication = 'default_application';
 
-        $appdefine = defined('TEST_CACHE_USING_APPLICATION_STORE') ? TEST_CACHE_USING_APPLICATION_STORE : false;
+        $appdefine = defined('TEST_CACHE_USING_APPLICATION_STORE') ? TEST_CACHE_USING_APPLICATION_STORE : 'phpunitstatic';
         if ($appdefine !== false && preg_match('/^[a-zA-Z][a-zA-Z0-9_]+$/', $appdefine)) {
             $expectedstore = $appdefine;
             $file = $CFG->dirroot.'/cache/stores/'.$appdefine.'/lib.php';
