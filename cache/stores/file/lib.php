@@ -265,7 +265,7 @@ class cachestore_file extends cache_store implements cache_is_key_aware, cache_i
      */
     public function initialise(cache_definition $definition) {
         $this->definition = $definition;
-        $hash = preg_replace('#[^a-zA-Z0-9]+#', '_', $this->definition->get_id());
+        $hash = preg_replace('#[^a-zA-Z0-9]+#', '_', $this->definition->generate_definition_hash());
         $this->path = $this->filestorepath.'/'.$hash;
         make_writable_directory($this->path, false);
         if ($this->prescan && $definition->get_mode() !== self::MODE_REQUEST) {
@@ -672,7 +672,9 @@ class cachestore_file extends cache_store implements cache_is_key_aware, cache_i
     public static function initialise_test_instance(cache_definition $definition) {
         $name = 'File test';
         $path = make_cache_directory('cachestore_file_test');
-        $cache = new cachestore_file($name, array('path' => $path));
+        // Autocreate is required here as test resets will kill all the paths.
+        // And we need to store to persist across tests.
+        $cache = new cachestore_file($name, array('path' => $path, 'autocreate' => true));
         $cache->initialise($definition);
         return $cache;
     }
