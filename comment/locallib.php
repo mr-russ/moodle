@@ -217,4 +217,47 @@ class comment_manager {
         }
         return true;
     }
+
+    /**
+     * Get comments created since a given time.
+     *
+     * @param  stdClass $course   course object
+     * @param  stdClass $cm       cm object
+     * @param  stdClass $context  context object
+     * @param  string $component  component name
+     * @param  int $since the time to check
+     * @return array list of comments db records since the given timelimit
+     * @since Moodle 3.2
+     */
+    public function get_component_comments_since($course, $cm, $context, $component, $since) {
+        global $DB;
+
+        $commentssince = array();
+        $where = 'contextid = ? AND component = ? AND timecreated > ?';
+        $comments = $DB->get_records_select('comments', $where, array($context->id, $component, $since));
+        // Check item by item if we have permissions.
+        $managersviewstatus = array();
+        foreach ($comments as $comment) {
+            // Check if the manager for the item is cached.
+            if (!isset($managersviewstatus[$comment->commentarea]) or
+                    !isset($managersviewstatus[$comment->commentarea][$comment->itemid])) {
+
+                $args = new stdClass;
+                $args->area      = $comment->commentarea;
+                $args->itemid    = $comment->itemid;
+                $args->context   = $context;
+                $args->course    = $course;
+                $args->cm        = $cm;
+                $args->client_id = 0;
+                $args->component = $component;
+                $manager = new comment($args);
+                $managersviewstatus[$comment->commentarea][$comment->itemid] = $manager->can_view();
+            }
+
+            if ($managersviewstatus[$comment->commentarea][$comment->itemid]) {
+                $commentssince[] = $comment;
+            }
+        }
+        return $commentssince;
+    }
 }
