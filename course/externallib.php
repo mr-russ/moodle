@@ -3018,4 +3018,113 @@ class core_course_external extends external_api {
             )
         );
     }
+
+    /**
+     * Returns description of method parameters
+     *
+     * @return external_function_parameters
+     * @since Moodle 3.2
+     */
+    public static function check_updates_parameters() {
+        return new external_function_parameters(
+            array(
+                'courseid' => new external_value(PARAM_INT, 'Course id to check'),
+                'tocheck' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'contextlevel' => new external_value(PARAM_ALPHA, 'The context level for the file location.
+                                                                                Only module supported right now.'),
+                            'id' => new external_value(PARAM_INT, 'Context instance id'),
+                            'since' => new external_value(PARAM_INT, 'Check updates since this time stamp'),
+                            'filter' => new external_multiple_structure(
+                                new external_value(PARAM_ALPHANUM, 'Element name: configuration, files, ratings, comments, grades'),
+                                'Check only for updates in these elements', VALUE_DEFAULT, array()
+                            )
+                        )
+                    ),
+                    'Instances to check'
+                )
+            )
+        );
+    }
+
+    /**
+     * Check if there is updates affecting the user for the given course and contexts.
+     * Right now only modules are supported.
+     * This WS calls mod_check_updates_since for each module to check if there is any update the user should we aware of.
+     * It just returns if there is updates, not specific information.
+     *
+     * @param array $modules the list of modules to check
+     * @return array list of updates and warnings
+     * @throws moodle_exception
+     * @since Moodle 3.2
+     */
+    public static function check_updates($courseid, $tocheck) {
+        global $CFG, $DB;
+
+        $params = self::validate_parameters(
+            self::check_updates_parameters(),
+            array(
+                'courseid' => $courseid,
+                'tocheck' => $tocheck
+            )
+        );
+
+        $course = get_course($params['courseid']);
+        $context = context_course::instance($course->id);
+        self::validate_context($context);
+
+        list($instances, $warnings) = course_check_updates($course, $params['tocheck']);
+
+        $instancesformatted = array();
+        foreach ($instances as $instance) {
+            $updates = array();
+            foreach ($instance['updates'] as $name => $updated) {
+                $updates[] = array(
+                    'name' => $name,
+                    'updated' => $updated
+                );
+            }
+            $instancesformatted[] = array(
+                'contextlevel' => $instance['contextlevel'],
+                'id' => $instance['id'],
+                'updates' => $updates
+            );
+        }
+
+        return array(
+            'instances' => $instancesformatted,
+            'warnings' => $warnings
+        );
+    }
+
+    /**
+     * Returns description of method result value
+     *
+     * @return external_description
+     * @since Moodle 3.2
+     */
+    public static function check_updates_returns() {
+        return new external_single_structure(
+            array(
+                'instances' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'contextlevel' => new external_value(PARAM_ALPHA, 'The context level'),
+                            'id' => new external_value(PARAM_INT, 'Instance id'),
+                            'updates' => new external_multiple_structure(
+                                new external_single_structure(
+                                    array(
+                                        'name' => new external_value(PARAM_ALPHANUMEXT, 'Name of the area updated.'),
+                                        'updated' => new external_value(PARAM_BOOL, 'Whether is was updated since the given time.')
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                'warnings' => new external_warnings()
+            )
+        );
+    }
 }
