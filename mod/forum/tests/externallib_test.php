@@ -159,14 +159,14 @@ class mod_forum_external_testcase extends externallib_advanced_testcase {
         $forums = mod_forum_external::get_forums_by_courses();
         $forums = external_api::clean_returnvalue(mod_forum_external::get_forums_by_courses_returns(), $forums);
         $this->assertCount(1, $forums);
-        $this->assertEquals($expectedforums[$forum1->id], $forums[0]);
-        $this->assertTrue($forums[0]['cancreatediscussions']);
+        $this->assertEquals($expectedforums, $forums);
+        $this->assertTrue($forums[$forum1->id]['cancreatediscussions']);
 
         // Change the type of the forum, the user shouldn't be able to add discussions.
         $DB->set_field('forum', 'type', 'news', array('id' => $forum1->id));
         $forums = mod_forum_external::get_forums_by_courses();
         $forums = external_api::clean_returnvalue(mod_forum_external::get_forums_by_courses_returns(), $forums);
-        $this->assertFalse($forums[0]['cancreatediscussions']);
+        $this->assertFalse($forums[$forum1->id]['cancreatediscussions']);
 
         // Call for the second course we unenrolled the user from.
         $forums = mod_forum_external::get_forums_by_courses(array($course2->id));

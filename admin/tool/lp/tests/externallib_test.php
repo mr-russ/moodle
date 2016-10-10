@@ -338,8 +338,8 @@ class tool_lp_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(external::search_users_returns(), $result);
         $this->assertCount(2, $result['users']);
         $this->assertEquals(2, $result['count']);
-        $this->assertEquals($u2->id, $result['users'][0]['id']);
-        $this->assertEquals($u1->id, $result['users'][1]['id']);
+        $this->assertEquals($u2->id, $result['users'][$u2->id]['id']);
+        $this->assertEquals($u1->id, $result['users'][$u1->id]['id']);
 
         // Filter by institution and name.
         $CFG->showuseridentity = 'institution';
@@ -347,8 +347,8 @@ class tool_lp_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(external::search_users_returns(), $result);
         $this->assertCount(2, $result['users']);
         $this->assertEquals(2, $result['count']);
-        $this->assertEquals($u1->id, $result['users'][0]['id']);
-        $this->assertEquals($u3->id, $result['users'][1]['id']);
+        $this->assertEquals($u1->id, $result['users'][$u1->id]['id']);
+        $this->assertEquals($u3->id, $result['users'][$u3->id]['id']);
 
         // Filter by id number.
         $CFG->showuseridentity = 'idnumber';
@@ -358,11 +358,11 @@ class tool_lp_external_testcase extends externallib_advanced_testcase {
         $this->assertEquals(1, $result['count']);
         $this->assertEquals($u1->id, $result['users'][0]['id']);
         $this->assertEquals($u1->idnumber, $result['users'][0]['idnumber']);
-        $this->assertEmpty($result['users'][0]['email']);
-        $this->assertEmpty($result['users'][0]['phone1']);
-        $this->assertEmpty($result['users'][0]['phone2']);
-        $this->assertEmpty($result['users'][0]['department']);
-        $this->assertEmpty($result['users'][0]['institution']);
+        $this->assertEmpty($result['users'][$u1->id]['email']);
+        $this->assertEmpty($result['users'][$u1->id]['phone1']);
+        $this->assertEmpty($result['users'][$u1->id]['phone2']);
+        $this->assertEmpty($result['users'][$u1->id]['department']);
+        $this->assertEmpty($result['users'][$u1->id]['institution']);
 
         // Filter by email.
         $CFG->showuseridentity = 'email';
@@ -370,12 +370,12 @@ class tool_lp_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(external::search_users_returns(), $result);
         $this->assertCount(3, $result['users']);
         $this->assertEquals(3, $result['count']);
-        $this->assertEquals($u2->id, $result['users'][0]['id']);
-        $this->assertEquals($u2->email, $result['users'][0]['email']);
-        $this->assertEquals($u1->id, $result['users'][1]['id']);
-        $this->assertEquals($u1->email, $result['users'][1]['email']);
-        $this->assertEquals($u3->id, $result['users'][2]['id']);
-        $this->assertEquals($u3->email, $result['users'][2]['email']);
+        $this->assertEquals($u2->id, $result['users'][$u2->id]['id']);
+        $this->assertEquals($u2->email, $result['users'][$u2->id]['email']);
+        $this->assertEquals($u1->id, $result['users'][$u1->id]['id']);
+        $this->assertEquals($u1->email, $result['users'][$u1->id]['email']);
+        $this->assertEquals($u3->id, $result['users'][$u3->id]['id']);
+        $this->assertEquals($u3->email, $result['users'][$u3->id]['email']);
 
         // Filter by any.
         $CFG->showuseridentity = 'idnumber,email,phone1,phone2,department,institution';
@@ -383,12 +383,12 @@ class tool_lp_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(external::search_users_returns(), $result);
         $this->assertCount(3, $result['users']);
         $this->assertEquals(3, $result['count']);
-        $this->assertArrayHasKey('idnumber', $result['users'][0]);
-        $this->assertArrayHasKey('email', $result['users'][0]);
-        $this->assertArrayHasKey('phone1', $result['users'][0]);
-        $this->assertArrayHasKey('phone2', $result['users'][0]);
-        $this->assertArrayHasKey('department', $result['users'][0]);
-        $this->assertArrayHasKey('institution', $result['users'][0]);
+        $this->assertArrayHasKey('idnumber', $result['users'][$u1->id]);
+        $this->assertArrayHasKey('email', $result['users'][$u1->id]);
+        $this->assertArrayHasKey('phone1', $result['users'][$u1->id]);
+        $this->assertArrayHasKey('phone2', $result['users'][$u1->id]);
+        $this->assertArrayHasKey('department', $result['users'][$u1->id]);
+        $this->assertArrayHasKey('institution', $result['users'][$u1->id]);
 
         // Switch to a user that cannot view identity fields.
         $this->setUser($ux);
@@ -404,13 +404,13 @@ class tool_lp_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(external::search_users_returns(), $result);
         $this->assertCount(1, $result['users']);
         $this->assertEquals(1, $result['count']);
-        $this->assertEquals($u1->id, $result['users'][0]['id']);
-        $this->assertEmpty($result['users'][0]['idnumber']);
-        $this->assertEmpty($result['users'][0]['email']);
-        $this->assertEmpty($result['users'][0]['phone1']);
-        $this->assertEmpty($result['users'][0]['phone2']);
-        $this->assertEmpty($result['users'][0]['department']);
-        $this->assertEmpty($result['users'][0]['institution']);
+        $this->assertEquals($u1->id, $result['users'][$u1->id]['id']);
+        $this->assertEmpty($result['users'][$u1->id]['idnumber']);
+        $this->assertEmpty($result['users'][$u1->id]['email']);
+        $this->assertEmpty($result['users'][$u1->id]['phone1']);
+        $this->assertEmpty($result['users'][$u1->id]['phone2']);
+        $this->assertEmpty($result['users'][$u1->id]['department']);
+        $this->assertEmpty($result['users'][$u1->id]['institution']);
     }
 
     public function test_data_for_user_competency_summary_in_plan() {

@@ -195,7 +195,7 @@ class mod_choice_externallib_testcase extends externallib_advanced_testcase {
         $results = external_api::clean_returnvalue(mod_choice_external::get_choice_options_returns(), $results);
         // We should retrieve no options.
         $this->assertCount(0, $results['options']);
-        $this->assertEquals($notopenyet, $results['warnings'][0]['warningcode']);
+        $this->assertEquals($notopenyet, $results['warnings'][1]['warningcode']);
 
         // Here we see the options because of preview!
         $choice->showpreview = 1;
@@ -252,8 +252,8 @@ class mod_choice_externallib_testcase extends externallib_advanced_testcase {
         $results = external_api::clean_returnvalue(mod_choice_external::get_choice_options_returns(), $results);
         // We should retrieve no options.
         $this->assertCount(0, $results['options']);
-        $this->assertEquals($expired, $results['warnings'][0]['warningcode']);
-
+        var_dump($results['warnings']);
+        $this->assertEquals($expired, $results['warnings'][$expired]['warningcode']);
     }
 
     /**
@@ -289,10 +289,10 @@ class mod_choice_externallib_testcase extends externallib_advanced_testcase {
         $results = external_api::clean_returnvalue(mod_choice_external::submit_choice_response_returns(), $results);
         $myanswers = $DB->get_records('choice_answers', array('choiceid' => $choice->id, 'userid' => $student1->id));
         $myanswer = reset($myanswers);
-        $this->assertEquals($results['answers'][0]['id'], $myanswer->id);
-        $this->assertEquals($results['answers'][0]['choiceid'], $myanswer->choiceid);
-        $this->assertEquals($results['answers'][0]['userid'], $myanswer->userid);
-        $this->assertEquals($results['answers'][0]['timemodified'], $myanswer->timemodified);
+        $this->assertEquals($results['answers'][$myanswer->id]['id'], $myanswer->id);
+        $this->assertEquals($results['answers'][$myanswer->id]['choiceid'], $myanswer->choiceid);
+        $this->assertEquals($results['answers'][$myanswer->id]['userid'], $myanswer->userid);
+        $this->assertEquals($results['answers'][$myanswer->id]['timemodified'], $myanswer->timemodified);
     }
 
     /**

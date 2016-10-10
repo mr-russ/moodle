@@ -296,9 +296,9 @@ class core_grading_externallib_testcase extends externallib_advanced_testcase {
         $this->assertEquals(1, count($result['instances'][0]['rubric']));
         $this->assertEquals(1, count($result['instances'][0]['rubric']['criteria']));
         $criteria = $result['instances'][0]['rubric']['criteria'];
-        $this->assertEquals($criterionid, $criteria[0]['criterionid']);
-        $this->assertEquals($levelid, $criteria[0]['levelid']);
-        $this->assertEquals('excellent work', $criteria[0]['remark']);
+        $this->assertEquals($criterionid, $criteria[$criterionid]['criterionid']);
+        $this->assertEquals($levelid, $criteria[$criterionid]['levelid']);
+        $this->assertEquals('excellent work', $criteria[$criterionid]['remark']);
     }
 
     /**

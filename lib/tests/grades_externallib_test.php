@@ -185,9 +185,10 @@ class core_grades_external_testcase extends externallib_advanced_testcase {
             array($student1->id, $student2->id)
         );
         $grades = external_api::clean_returnvalue(core_grades_external::get_grades_returns(), $grades);
-        $this->assertTrue(count($grades['items']) == 2);
-        $this->assertTrue(count($grades['items'][0]['grades']) == 2);
-        $this->assertTrue(count($grades['items'][1]['grades']) == 2);
+        $this->assertCount(2, $grades['items']);
+        foreach ($grades['items'] as $key => $data) {
+            $this->assertCount(2, $data['grades']);
+        }
 
         // Student requesting another student's grade for the assignment (should fail).
         $this->setUser($student1);

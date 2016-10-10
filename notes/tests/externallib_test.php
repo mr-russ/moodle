@@ -306,7 +306,7 @@ class core_notes_externallib_testcase extends externallib_advanced_testcase {
         // Retrieve notes, normal case.
         $result = core_notes_external::get_course_notes($course1->id, $student1->id);
         $result = external_api::clean_returnvalue(core_notes_external::get_course_notes_returns(), $result);
-        $this->assertEquals($notes1->id, $result['sitenotes'][0]['id']);
+        $this->assertEquals($notes1->id, $result['sitenotes'][$notes1->id]['id']);
         $this->assertCount(2, $result['coursenotes']);
 
         foreach ($result['coursenotes'] as $coursenote) {
@@ -315,7 +315,7 @@ class core_notes_externallib_testcase extends externallib_advanced_testcase {
             }
         }
 
-        $this->assertEquals($notep1->id, $result['personalnotes'][0]['id']);
+        $this->assertArrayHasKey($notep1->id, $result['personalnotes']);
 
         // Try to get notes from a course the user is not enrolled.
         try {
@@ -340,7 +340,7 @@ class core_notes_externallib_testcase extends externallib_advanced_testcase {
         $this->setAdminUser();
         $result = core_notes_external::get_course_notes(0, $student1->id);
         $result = external_api::clean_returnvalue(core_notes_external::get_course_notes_returns(), $result);
-        $this->assertEquals($notes1->id, $result['sitenotes'][0]['id']);
+        $this->assertArrayHasKey($notes1->id, $result['sitenotes']);
         $this->assertCount(1, $result['sitenotes']);
 
         $this->setUser($teacher1);
@@ -353,7 +353,7 @@ class core_notes_externallib_testcase extends externallib_advanced_testcase {
         $this->setUser($teacher2);
         $result = core_notes_external::get_course_notes($course1->id, $student1->id);
         $result = external_api::clean_returnvalue(core_notes_external::get_course_notes_returns(), $result);
-        $this->assertEquals($notes1->id, $result['sitenotes'][0]['id']);
+        $this->assertArrayHasKey($notes1->id, $result['sitenotes']);
 
         foreach ($result['coursenotes'] as $coursenote) {
             if ($coursenote['id'] != $notea1->id and $coursenote['id'] != $notea2->id) {
@@ -366,7 +366,7 @@ class core_notes_externallib_testcase extends externallib_advanced_testcase {
 
         $result = core_notes_external::get_course_notes($course1->id, 0);
         $result = external_api::clean_returnvalue(core_notes_external::get_course_notes_returns(), $result);
-        $this->assertEquals($notes1->id, $result['sitenotes'][0]['id']);
+        $this->assertArrayHasKey($notes1->id, $result['sitenotes']);
 
         foreach ($result['coursenotes'] as $coursenote) {
             if ($coursenote['id'] != $notea1->id and $coursenote['id'] != $notea2->id) {
@@ -380,7 +380,7 @@ class core_notes_externallib_testcase extends externallib_advanced_testcase {
         $this->setUser($teacher1);
         $result = core_notes_external::get_course_notes($course1->id, 0);
         $result = external_api::clean_returnvalue(core_notes_external::get_course_notes_returns(), $result);
-        $this->assertEquals($notep1->id, $result['personalnotes'][0]['id']);
+        $this->assertArrayHasKey($notep1->id, $result['personalnotes']);
         $this->assertCount(1, $result['personalnotes']);
 
     }

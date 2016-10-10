@@ -435,8 +435,8 @@ class external_api {
                         print_r($response, true) . '\'');
             }
             $result = array();
-            foreach ($response as $param) {
-                $result[] = self::clean_returnvalue($description->content, $param);
+            foreach ($response as $key => $param) {
+                $result[$key] = self::clean_returnvalue($description->content, $param);
             }
             return $result;
 

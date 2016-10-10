@@ -69,7 +69,7 @@ class auth_email_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(auth_email_external::get_signup_settings_returns(), $result);
 
         // Check expected data.
-        $this->assertEquals(array('firstname', 'lastname'), $result['namefields']);
+        $this->assertEquals(array(5 => 'firstname', 21 => 'lastname'), $result['namefields']);
         $this->assertEquals($CFG->defaultcity, $result['defaultcity']);
         $this->assertEquals($CFG->country, $result['country']);
         $this->assertEquals($CFG->sitepolicy, $result['sitepolicy']);

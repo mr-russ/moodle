@@ -378,24 +378,24 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_attempts_returns(), $result);
 
         $this->assertCount(1, $result['attempts']);
-        $this->assertEquals($attempt->id, $result['attempts'][0]['id']);
-        $this->assertEquals($quiz->id, $result['attempts'][0]['quiz']);
-        $this->assertEquals($this->student->id, $result['attempts'][0]['userid']);
-        $this->assertEquals(1, $result['attempts'][0]['attempt']);
+        $this->assertEquals($attempt->id, $result['attempts'][$attempt->id]['id']);
+        $this->assertEquals($quiz->id, $result['attempts'][$attempt->id]['quiz']);
+        $this->assertEquals($this->student->id, $result['attempts'][$attempt->id]['userid']);
+        $this->assertEquals(1, $result['attempts'][$attempt->id]['attempt']);
 
         // Test filters. Only finished.
         $result = mod_quiz_external::get_user_attempts($quiz->id, 0, 'finished', false);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_attempts_returns(), $result);
 
         $this->assertCount(1, $result['attempts']);
-        $this->assertEquals($attempt->id, $result['attempts'][0]['id']);
+        $this->assertEquals($attempt->id, $result['attempts'][$attempt->id]['id']);
 
         // Test filters. All attempts.
         $result = mod_quiz_external::get_user_attempts($quiz->id, 0, 'all', false);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_attempts_returns(), $result);
 
         $this->assertCount(1, $result['attempts']);
-        $this->assertEquals($attempt->id, $result['attempts'][0]['id']);
+        $this->assertEquals($attempt->id, $result['attempts'][$attempt->id]['id']);
 
         // Test filters. Unfinished.
         $result = mod_quiz_external::get_user_attempts($quiz->id, 0, 'unfinished', false);
@@ -405,12 +405,12 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
 
         // Start a new attempt, but not finish it.
         $timenow = time();
-        $attempt = quiz_create_attempt($quizobj, 2, false, $timenow, false, $this->student->id);
+        $attempt2 = quiz_create_attempt($quizobj, 2, false, $timenow, false, $this->student->id);
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
 
-        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
-        quiz_attempt_save_started($quizobj, $quba, $attempt);
+        quiz_start_new_attempt($quizobj, $quba, $attempt2, 1, $timenow);
+        quiz_attempt_save_started($quizobj, $quba, $attempt2);
 
         // Test filters. All attempts.
         $result = mod_quiz_external::get_user_attempts($quiz->id, 0, 'all', false);
@@ -430,13 +430,14 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_attempts_returns(), $result);
 
         $this->assertCount(1, $result['attempts']);
-        $this->assertEquals($this->student->id, $result['attempts'][0]['userid']);
+        $this->assertEquals($this->student->id, $result['attempts'][$attempt->id]['userid']);
 
         $result = mod_quiz_external::get_user_attempts($quiz->id, $this->student->id, 'all');
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_attempts_returns(), $result);
 
         $this->assertCount(2, $result['attempts']);
-        $this->assertEquals($this->student->id, $result['attempts'][0]['userid']);
+        $this->assertEquals($this->student->id, $result['attempts'][$attempt->id]['userid']);
+        $this->assertEquals($this->student->id, $result['attempts'][$attempt2->id]['userid']);
 
         // Invalid parameters.
         try {
