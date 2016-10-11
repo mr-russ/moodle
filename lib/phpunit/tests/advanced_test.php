@@ -81,6 +81,32 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         $this->assertDebuggingCalled('pokus', DEBUG_MINIMAL);
     }
 
+    /**
+     * @test
+     *
+     * Annotations are a valid PHPUnit method for running tests.  Debugging needs to support them.
+     */
+    public function debugging_called_with_annotation_that_fails_for_verification() {
+        debugging('I am a debug message that is included in the error, not inline', DEBUG_MINIMAL);
+    }
+
+    public function test_debugging_trapping_assert_failures_properly() {
+        debugging('I am a debug message that is included in the error, not inline', DEBUG_MINIMAL);
+        $this->assertDebuggingNotCalled('Message included as well.');
+    }
+
+    public function test_debugging_trapping_multiple_properly() {
+        debugging('I am a debug message that is included in the error, not inline', DEBUG_MINIMAL);
+        debugging('I am a debug message that is included in the error, not inline', DEBUG_MINIMAL);
+        $this->assertDebuggingCalled('Message included as well.');
+    }
+
+    public function test_debugging_trapping_count_properly() {
+        debugging('I am a debug message that is included in the error, not inline', DEBUG_MINIMAL);
+        debugging('I am a debug message that is included in the error, not inline', DEBUG_MINIMAL);
+        $this->assertDebuggingCalledCount(2, array('',''));
+    }
+
     public function test_set_user() {
         global $USER, $DB, $SESSION;
 
