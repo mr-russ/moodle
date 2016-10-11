@@ -1050,3 +1050,29 @@ function survey_get_completion_state($course, $cm, $userid, $type) {
         return $type;
     }
 }
+
+/**
+ * Check if the module has any update that affects the current user since a given time.
+ *
+ * @param  stdClass $survey survey object
+ * @param  stdClass $cm cm object
+ * @param  stdClass $context context object
+ * @param  int $from the time to check updates from
+ * @param  array $filter  if we need to check only specific updates
+ * @return stdClass an object with the different type of elements indicating if they were updated or not
+ * @since Moodle 3.2
+ */
+function survey_check_updates_since($survey, $cm, $context, $from, $filter = array()) {
+    global $DB, $USER;
+
+    $updates = new stdClass();
+    if (!has_capability('mod/survey:participate', $context)) {
+        return $updates;
+    }
+    $updates = course_check_module_updates_since($survey, $cm, $context, $from, array(), $filter);
+
+    $select = 'survey = ? AND userid = ? AND time > ?';
+    $params = array($survey->id, $USER->id, $from);
+    $updates->tracks = $DB->count_records_select('survey_answers', $select, $params) > 0;
+    return $updates;
+}

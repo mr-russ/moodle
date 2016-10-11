@@ -324,3 +324,25 @@ function label_generate_resized_image(stored_file $file, $maxwidth, $maxheight) 
         return $img;
     }
 }
+
+/**
+ * Check if the module has any update that affects the current user since a given time.
+ *
+ * @param  stdClass $label label object
+ * @param  stdClass $cm cm object
+ * @param  stdClass $context context object
+ * @param  int $from the time to check updates from
+ * @param  array $filter  if we need to check only specific updates
+ * @return stdClass an object with the different type of elements indicating if they were updated or not
+ * @since Moodle 3.2
+ */
+function label_check_updates_since($label, $cm, $context, $from, $filter = array()) {
+
+    $updates = new stdClass();
+    if (!has_capability('mod/label:view', $context)) {
+        return $updates;
+    }
+    $updates = course_check_module_updates_since($label, $cm, $context, $from, array(), $filter);
+
+    return $updates;
+}

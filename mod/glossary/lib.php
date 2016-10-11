@@ -4101,3 +4101,33 @@ function glossary_edit_entry($entry, $course, $cm, $glossary, $context) {
     }
     return $entry;
 }
+
+/**
+ * Check if the module has any update that affects the current user since a given time.
+ *
+ * @param  stdClass $glossary glossary object
+ * @param  stdClass $cm cm object
+ * @param  stdClass $context context object
+ * @param  int $from the time to check updates from
+ * @param  array $filter  if we need to check only specific updates
+ * @return stdClass an object with the different type of elements indicating if they were updated or not
+ * @since Moodle 3.2
+ */
+function glossary_check_updates_since($glossary, $cm, $context, $from, $filter = array()) {
+    global $DB;
+
+    $updates = new stdClass();
+    if (!has_capability('mod/glossary:view', $context)) {
+        return $updates;
+    }
+    $updates = course_check_module_updates_since($glossary, $cm, $context, $from, array('attachment', 'entry'), $filter);
+
+    $select = 'glossaryid = :id AND (timecreated > :since1 OR timemodified > :since2)';
+    $params = array('id' => $glossary->id, 'since1' => $from, 'since2' => $from);
+    if (!has_capability('mod/glossary:approve', $context)) {
+        $select .= ' AND approved = 1';
+    }
+    $updates->entries = $DB->count_records_select('glossary_entries', $select, $params) > 0;
+
+    return $updates;
+}

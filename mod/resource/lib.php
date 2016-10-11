@@ -519,3 +519,24 @@ function resource_view($resource, $course, $cm, $context) {
     $completion = new completion_info($course);
     $completion->set_module_viewed($cm);
 }
+
+/**
+ * Check if the module has any update that affects the current user since a given time.
+ *
+ * @param  stdClass $resource resource object
+ * @param  stdClass $cm cm object
+ * @param  stdClass $context context object
+ * @param  int $from the time to check updates from
+ * @param  array $filter  if we need to check only specific updates
+ * @return stdClass an object with the different type of elements indicating if they were updated or not
+ * @since Moodle 3.2
+ */
+function resource_check_updates_since($resource, $cm, $context, $from, $filter = array()) {
+
+    $updates = new stdClass();
+    if (!has_capability('mod/resource:view', $context)) {
+        return $updates;
+    }
+    $updates = course_check_module_updates_since($resource, $cm, $context, $from, array('content'), $filter);
+    return $updates;
+}

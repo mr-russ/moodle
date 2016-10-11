@@ -636,3 +636,33 @@ function book_view($book, $chapter, $islastchapter, $course, $cm, $context) {
         }
     }
 }
+
+/**
+ * Check if the module has any update that affects the current user since a given time.
+ *
+ * @param  stdClass $book book object
+ * @param  stdClass $cm cm object
+ * @param  stdClass $context context object
+ * @param  int $from the time to check updates from
+ * @param  array $filter  if we need to check only specific updates
+ * @return stdClass an object with the different type of elements indicating if they were updated or not
+ * @since Moodle 3.2
+ */
+function book_check_updates_since($book, $cm, $context, $from, $filter = array()) {
+    global $DB;
+
+    $updates = new stdClass();
+    if (!has_capability('mod/book:read', $context)) {
+        return $updates;
+    }
+    $updates = course_check_module_updates_since($book, $cm, $context, $from, array('content'), $filter);
+
+    $select = 'bookid = :id AND (timecreated > :since1 OR timemodified > :since2)';
+    $params = array('id' => $book->id, 'since1' => $from, 'since2' => $from);
+    if (!has_capability('mod/book:viewhiddenchapters', $context)) {
+        $select .= ' AND hidden = 0';
+    }
+    $updates->entries = $DB->count_records_select('book_chapters', $select, $params) > 0;
+
+    return $updates;
+}

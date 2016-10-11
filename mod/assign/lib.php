@@ -1517,3 +1517,33 @@ function mod_assign_output_fragment_gradingpanel($args) {
 
     return $assign->view('gradingpanel', $viewargs);
 }
+
+/**
+ * Check if the module has any update that affects the current user since a given time.
+ *
+ * @param  stdClass $assign assign object
+ * @param  stdClass $cm cm object
+ * @param  stdClass $context context object
+ * @param  int $from the time to check updates from
+ * @param  array $filter  if we need to check only specific updates
+ * @return stdClass an object with the different type of elements indicating if they were updated or not
+ * @since Moodle 3.2
+ */
+function assign_check_updates_since($assign, $cm, $context, $from, $filter = array()) {
+    global $DB, $USER, $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+    $updates = new stdClass();
+    if (!has_capability('mod/assign:view', $context)) {
+        return $updates;
+    }
+    $updates = course_check_module_updates_since($assign, $cm, $context, $from, array(ASSIGN_INTROATTACHMENT_FILEAREA), $filter);
+
+    // Check if there is a new submission by the user or new grades.
+    $select = 'assignment = :id AND userid = :userid AND (timecreated > :since1 OR timemodified > :since2)';
+    $params = array('id' => $assign->id, 'userid' => $USER->id, 'since1' => $from, 'since2' => $from);
+    $updates->submissions = $DB->count_records_select('assign_submission', $select, $params) > 0;
+    $updates->grades = $DB->count_records_select('assign_grades', $select, $params) > 0;
+
+    return $updates;
+}
