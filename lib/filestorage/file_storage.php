@@ -803,16 +803,23 @@ class file_storage {
      * @return stored_file[] array of stored_files indexed by pathanmehash
      */
     public function get_area_files($contextid, $component, $filearea, $itemid = false, $sort = "itemid, filepath, filename",
-                                    $includedirs = true, $extrasql = '', $extraconditions = array()) {
+                                    $includedirs = true, $updatedsince = 0) {
         global $DB;
 
-        $conditions = array('contextid'=>$contextid, 'component'=>$component, 'filearea'=>$filearea);
-        if ($itemid !== false) {
+        list($areasql, $conditions) = $DB->get_in_or_equal($filearea, SQL_PARAMS_NAMED);
+        $conditions['contextid'] = $contextid;
+        $conditions['component'] = $component;
+
+        if ($itemid !== false && is_array($filearea)) {
+            throw new coding_exception('You cannot specify multiple fileareas as well as an itemid.');
+        } else if ($itemid !== false) {
             $itemidsql = ' AND f.itemid = :itemid ';
             $conditions['itemid'] = $itemid;
         } else {
             $itemidsql = '';
         }
+
+        $conditions['time'] = $updatedsince;
 
         $sql = "SELECT ".self::instance_sql_fields('f', 'r')."
                   FROM {files} f
@@ -820,12 +827,9 @@ class file_storage {
                        ON f.referencefileid = r.id
                  WHERE f.contextid = :contextid
                        AND f.component = :component
-                       AND f.filearea = :filearea
+                       AND f.filearea $areasql
+                       AND f.timemodified >= :time
                        $itemidsql";
-        if (!empty($extrasql)) {
-            $sql .= " $extrasql";
-            $conditions = array_merge($conditions, $extraconditions);
-        }
         if (!empty($sort)) {
             $sql .= " ORDER BY {$sort}";
         }
