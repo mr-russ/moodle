@@ -72,8 +72,6 @@ abstract class static_data_store extends cache_store {
      */
     protected static function flush_store() {
         $ids = array_keys(self::$staticstore);
-        unset(self::$staticstore);
-        self::$staticstore = array();
         foreach ($ids as $id) {
             self::$staticstore[$id] = array();
         }
@@ -455,7 +453,7 @@ class cachestore_static extends static_data_store implements cache_is_key_aware,
      * Performs any necessary clean up when the store instance is being deleted.
      */
     public function instance_deleted() {
-        $this->purge();
+        self::flush_store();
     }
 
     /**

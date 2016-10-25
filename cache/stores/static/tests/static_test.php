@@ -117,4 +117,23 @@ class cachestore_static_test extends cachestore_tests {
             'key4', 'key5', 'key6', 'key7', 'keyA', 'keyB', 'keyC'
         )));
     }
+
+    public function test_flush_store() {
+        $defid = 'phpunit/testmaxsize';
+        $config = cache_config_testing::instance();
+        $config->phpunit_add_definition($defid, array(
+            'mode' => cache_store::MODE_REQUEST,
+            'component' => 'phpunit',
+            'area' => 'testmaxsize',
+            'maxsize' => 3
+        ));
+        $definition = cache_definition::load($defid, $config->get_definition_by_id($defid));
+        $instance = cachestore_static::initialise_test_instance($definition);
+        $flushinstance = new cachestore_static('testforflush');
+
+        $this->assertTrue($instance->set('key1', 'value1'));
+        $this->assertEquals('value1', $instance->get('key1'));
+        $flushinstance->instance_deleted();
+        $this->assertFalse($instance->get('key1'));
+    }
 }
