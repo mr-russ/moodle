@@ -1203,7 +1203,9 @@ class core_plugin_manager {
             foreach ($this->other_plugins_that_require($subpluginfo->component) as $requiresme) {
                 $ismyparent = ($pluginfo->component === $requiresme);
                 $ismysibling = in_array($requiresme, array_keys($subplugins));
-                if (!$ismyparent and !$ismysibling) {
+                $requiredplugininfo = $this->get_plugin_info($requiresme);
+                $isinstalled = $requiredplugininfo->get_status() !== static::PLUGIN_STATUS_NEW;
+                if (!$ismyparent and !$ismysibling and $isinstalled) {
                     return false;
                 }
             }
@@ -1213,7 +1215,9 @@ class core_plugin_manager {
         // (but its subplugins).
         foreach ($this->other_plugins_that_require($pluginfo->component) as $requiresme) {
             $ismysubplugin = in_array($requiresme, array_keys($subplugins));
-            if (!$ismysubplugin) {
+            $requiredplugininfo = $this->get_plugin_info($requiresme);
+            $isinstalled = $requiredplugininfo->get_status() !== static::PLUGIN_STATUS_NEW;
+            if (!$ismysubplugin and $isinstalled) {
                 return false;
             }
         }
